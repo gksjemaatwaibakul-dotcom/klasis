@@ -353,6 +353,23 @@ ok(lain && lain.kelas.indexOf('11B') >= 0, '11B tetap diperingatkan pada tanggal
 const efek12 = h12.some((x) => liburDates.indexOf(x.tanggal) >= 0 && x.kelas.some((k) => /^12/.test(k)));
 ok(efek12 || true, 'libur KG1 tidak menyentuh kelompok lain (cek lolos)');
 
+section('REV 13: Libur kelompok juga menekan peringatan absen PENGAMPU (+ toleransi ejaan kelas)');
+// KG1 (11A,11B) sudah ditandai libur pada 2026-09-04/11/18 di bagian REV 12.
+const pw13 = GAS.getPeringatanPengampuPersisten(ADMIN);
+const apLibur = pw13.absenPengampu.filter((x) => x.tanggal === '2026-09-04')[0];
+ok(!apLibur || apLibur.pengampu.indexOf('Guru Sebelas') < 0, 'Guru Sebelas (11A) TIDAK diperingatkan absen pengampu pada tanggal libur KG1');
+const apNormal = pw13.absenPengampu.filter((x) => x.tanggal === '2026-09-25')[0];
+ok(apNormal && apNormal.pengampu.indexOf('Guru Sebelas') >= 0, 'Guru Sebelas tetap diperingatkan pada tanggal non-libur');
+// Jurnal & buku mingguan untuk kelas 11A juga tertekan pada tanggal libur.
+const jLibur = pw13.jurnal.filter((x) => x.tanggal === '2026-09-04')[0];
+ok(!jLibur || jLibur.kelas.indexOf('11A') < 0, 'jurnal 11A tidak diperingatkan pada tanggal libur');
+// Toleransi ejaan nama kelas di kelompok ("kelas 11a" harus cocok dengan "11A").
+ssObj.getSheetByName('KelompokKelas').appendRow(['KG9', 'Grup Ejaan Lain', '', 'kelas 11a']);
+GAS.tambahHariLiburBatch(ADMIN, ['2026-09-25'], 'uji ejaan', 'KG9');
+const pw13b = GAS.getPeringatanPengampuPersisten(ADMIN);
+const apEjaan = pw13b.absenPengampu.filter((x) => x.tanggal === '2026-09-25')[0];
+ok(!apEjaan || apEjaan.pengampu.indexOf('Guru Sebelas') < 0, 'ejaan "kelas 11a" tetap dikenali -> pengampu 11A tidak diperingatkan');
+
 console.log('\n========================================');
 console.log('HASIL: ' + pass + ' lolos, ' + fail + ' gagal');
 process.exit(fail ? 1 : 0);

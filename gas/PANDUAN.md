@@ -2,7 +2,16 @@
 
 File final: `Code.gs` dan `Index.html` di folder ini. Data & fitur lama tetap utuh.
 
-## Perbaikan REV 12 (terbaru)
+## Perbaikan REV 13 (terbaru)
+1. Libur kelompok kini PASTI juga menekan peringatan absen pengampu, jurnal, dan
+   buku mingguan: nama kelas dinormalisasi saat mencocokkan ("11A" = "11 A" =
+   "Kelas 11 A"), sehingga beda ejaan tidak lagi membuat pengecualian libur gagal.
+2. Catatan perilaku: pengampu baru dikecualikan bila SEMUA kelas yang diampunya
+   libur pada tanggal tsb. Pengampu yang mengampu kelas di dua kelompok berbeda
+   tetap diperingatkan bila salah satu kelompoknya tidak libur. Pastikan juga kolom
+   kelas diampu pada data pengampu (sheet Auth) terisi.
+
+## Perbaikan REV 12
 1. Hari Libur kini bisa diisi BANYAK TANGGAL sekaligus: mode Satu hari, Rentang
    tanggal, Satu minggu (Sen–Min), Satu bulan penuh, atau Beberapa tanggal terpilih.
    Opsi "Hanya tandai hari yang ada jadwalnya" menyaring hari tanpa jadwal.

@@ -64,7 +64,7 @@ const KONFIG = {
 
 // Versi aplikasi — ditampilkan di footer (halaman login & aplikasi) agar mudah
 // memastikan versi yang sedang berjalan. Naikkan setiap kali deploy perubahan.
-var APP_REV = 'REV 12';
+var APP_REV = 'REV 13';
 var APP_BUILD_DATE = '2026-10-06';
 
 
@@ -3442,11 +3442,14 @@ function _liburInfo() {
     var tgl = _t(r[1]); if (!tgl) return;
     var kid = _t(r[3]);
     if (!kid) { glob[tgl] = true; }
-    else { if (!byDate[tgl]) byDate[tgl] = {}; var g = groups[kid]; if (g) g.kelas.forEach(function (k) { byDate[tgl][k] = true; }); }
+    else { if (!byDate[tgl]) byDate[tgl] = {}; var g = groups[kid]; if (g) g.kelas.forEach(function (k) { byDate[tgl][_normKelas(k)] = true; }); }
   });
   return { global: glob, byDate: byDate };
 }
-function _isKelasLibur(info, tgl, kelas) { return !!info.global[tgl] || !!(info.byDate[tgl] && info.byDate[tgl][kelas]); }
+// Normalisasi nama kelas agar ejaan berbeda ("11A", "11 A", "Kelas 11 A",
+// "kelas 11b") tetap dianggap kelas yang sama saat mengecek hari libur.
+function _normKelas(nama) { return _t(nama).toLowerCase().replace(/kelas/g, '').replace(/[^a-z0-9]/g, ''); }
+function _isKelasLibur(info, tgl, kelas) { return !!info.global[tgl] || !!(info.byDate[tgl] && info.byDate[tgl][_normKelas(kelas)]); }
 
 // Nomor hari (0=Min..6=Sab) yang memiliki jadwal mengajar — dipakai UI Hari Libur
 // untuk opsi "hanya tandai hari yang ada jadwalnya".
