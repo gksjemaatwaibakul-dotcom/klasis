@@ -38,6 +38,12 @@ Konfigurasi default: Ganjil Jul–Des, Genap Jan–Jun, triwulan per 3 bulan (di
 - Terminologi: Pengampuh→Pengampu & Alfa→Alpa global; migrasi Role di _ensureAuthSchema; rename/merge sheet AbsensiPengampuh→AbsensiPengampu; normalisasi /^al/i untuk data lama
 - Uji: 41/41 tes simulasi Node lolos; screenshot UI (login, publik, dashboard admin, kelola peringatan, bahan ajar) OK
 
+## Perbaikan REV 11 (2026-10-06)
+- Akar masalah kelas 11 (terbukti via Diagnosa user): seluruh peringatan absen kelas 11 tertutup aturan dismiss lama (`disembunyikan` = `belum isi` untuk tiap kelas 11). Bukan bug perhitungan
+- `getDiagnosaPeringatan` diperluas: menampilkan daftar aturan dismiss yang menutup absenSiswa (kelompok, tanggal, pembuat)
+- `resetSemuaDismiss(userCtx)` (admin) + tombol "Tampilkan Semua" di Kelola Peringatan — menghapus semua aturan sembunyikan
+- Uji: 52/52 tes Node lolos (5 tes baru REV 11); versi `APP_REV='REV 11'`
+
 ## Perbaikan REV 10 (2026-10-06)
 - Bahan ajar anti-stuck: modal Bootstrap diganti overlay buatan sendiri (`.ba-overlay`) — tombol Tutup/Zoom/Layar Penuh/Tab Baru pasti berfungsi di sandbox GAS; ESC menutup
 - Dashboard: kembali menampilkan daftar lengkap nama kelas & pengampu yang belum mengisi (read-only); dismiss hanya di menu Kelola Peringatan (Admin/Moderator). `renderWarnBlock(topik, items, readOnly)`

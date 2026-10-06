@@ -64,7 +64,7 @@ const KONFIG = {
 
 // Versi aplikasi — ditampilkan di footer (halaman login & aplikasi) agar mudah
 // memastikan versi yang sedang berjalan. Naikkan setiap kali deploy perubahan.
-var APP_REV = 'REV 10';
+var APP_REV = 'REV 11';
 var APP_BUILD_DATE = '2026-10-06';
 
 
@@ -3555,7 +3555,37 @@ function getDiagnosaPeringatan(userCtx) {
       ' | disembunyikan: ' + dism.length +
       (belum.length ? ' | contoh: ' + belum.slice(Math.max(0, belum.length - 3)).join(', ') : ''));
   });
+  // Aturan dismiss yang menutup peringatan absen siswa — biasanya inilah alasan
+  // sebuah kelas "tidak pernah" diperingatkan (mis. seluruh kelas 11).
+  L.push('');
+  L.push('--- Aturan sembunyikan yang menutup absenSiswa ---');
+  var gm = {}; getKelompokKelas().forEach(function (g) { gm[g.id] = g.nama; });
+  var rules = _readSheet(FB_SHEETS.DISMISS2), n = 0;
+  rules.forEach(function (r) {
+    var topik = _t(r[1]);
+    if (topik && topik !== 'absenSiswa') return;
+    n++;
+    L.push('  [' + _t(r[0]) + '] kelompok: ' + (_t(r[2]) ? (gm[_t(r[2])] || _t(r[2])) : '(semua kelompok)') +
+      ' | tanggal: ' + (_t(r[4]) || '(SEMUA tanggal -> menyembunyikan selamanya!)') +
+      ' | oleh: ' + _t(r[6]) + ' (' + _t(r[5]) + ') | ' + _t(r[7]));
+  });
+  if (!n) L.push('  (tidak ada)');
+  L.push('');
+  L.push('Bila kelas tertutup aturan di atas: buka menu Kelola Peringatan lalu klik "Tampilkan Semua" untuk mereset.');
   return L.join('\n');
+}
+
+// Menghapus SEMUA aturan sembunyikan peringatan (reset total). Khusus Admin.
+function resetSemuaDismiss(userCtx) {
+  if (_fbRole(userCtx) !== 'admin') throw new Error('Hanya Admin yang dapat mereset peringatan.');
+  return _withLock(function () {
+    _ensureFiturSheets();
+    var sh = _sheet(FB_SHEETS.DISMISS2);
+    var n = sh.getLastRow() - 1;
+    if (n > 0) sh.deleteRows(2, n);
+    _logActivity('Reset Semua Sembunyian Peringatan', n + ' aturan dihapus', userCtx.username);
+    return n > 0 ? (n + ' aturan sembunyikan dihapus. Semua peringatan tampil kembali.') : 'Tidak ada aturan sembunyikan.';
+  });
 }
 
 // Req #7: pengampu belum mengisi absen pengampu / jurnal / buku mingguan.

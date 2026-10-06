@@ -127,7 +127,7 @@ function seedSheet(name, rows) { const s = ssObj.insertSheet(name); s.rows = row
 const code = fs.readFileSync(path.join(__dirname, '..', 'Code.gs'), 'utf8');
 const factory = new Function(
   'SpreadsheetApp', 'Utilities', 'Session', 'LockService', 'Logger', 'HtmlService', 'DriveApp', 'PropertiesService',
-  code + '\n;return { getPeringatanAbsenSiswaPersisten, getPeringatanPengampuPersisten, getKehadiranStats, getPeriodeRange, getPublikDashboard, uploadBahanAjar, hapusBahanAjar, getBahanAjarList, _hariAktifDariJadwal, _kelasSetPeringatan, _kelasSetFromCtx, getKelasBelumAbsen, KONFIG };'
+  code + '\n;return { getPeringatanAbsenSiswaPersisten, getPeringatanPengampuPersisten, getKehadiranStats, getPeriodeRange, getPublikDashboard, uploadBahanAjar, hapusBahanAjar, getBahanAjarList, _hariAktifDariJadwal, _kelasSetPeringatan, _kelasSetFromCtx, getKelasBelumAbsen, dismissPeringatanBatch, resetSemuaDismiss, getDiagnosaPeringatan, KONFIG };'
 );
 const GAS = factory(SpreadsheetApp, Utilities, Session, LockService, Logger, HtmlService, DriveApp, PropertiesService);
 
@@ -315,6 +315,22 @@ ok(tot2 === 1, 'minggu ini kosong -> grafik memakai minggu terakhir yang punya d
 ok(pub2.kehadiran.mingguIni === false, 'penanda mingguIni=false saat memakai data mundur');
 ok(pub2.kehadiran.tglMulai <= d3s && pub2.kehadiran.tglAkhir >= d3s, 'rentang yang dilaporkan mencakup tanggal data lama');
 absSheet.rows = absBackup;
+
+section('REV 11: Reset sembunyian peringatan (kasus kelas 11 tertutup dismiss)');
+// Sembunyikan peringatan absenSiswa SEMUA kelas untuk hari ini, lalu reset semua.
+// (11D dipakai sebagai kelas uji: jadwalnya ber-hari tak dikenal -> wajib tiap hari aktif & belum pernah mengisi.)
+GAS.dismissPeringatanBatch(ADMIN, [{ topik: 'absenSiswa', tanggal: todayStr }]);
+let h2 = GAS.getPeringatanAbsenSiswaPersisten(ADMIN);
+let h2ini = h2.filter((x) => x.tanggal === todayStr)[0];
+ok(!h2ini || h2ini.kelas.length === 0, 'setelah dismiss (tanggal hari ini), peringatan hari ini tertutup semua');
+const rm = GAS.resetSemuaDismiss(ADMIN);
+ok(/aturan/.test(rm), 'reset menghapus aturan (' + rm + ')');
+h2 = GAS.getPeringatanAbsenSiswaPersisten(ADMIN);
+h2ini = h2.filter((x) => x.tanggal === todayStr)[0];
+ok(h2ini && h2ini.kelas.indexOf('11D') >= 0, 'setelah reset, peringatan tampil kembali (11D terlihat lagi)');
+const diag = GAS.getDiagnosaPeringatan(ADMIN);
+ok(/Aturan sembunyikan yang menutup absenSiswa/.test(diag), 'diagnosa menampilkan daftar aturan dismiss');
+ok(diag.indexOf('11A') >= 0, 'diagnosa mencantumkan kelas 11');
 
 console.log('\n========================================');
 console.log('HASIL: ' + pass + ' lolos, ' + fail + ' gagal');

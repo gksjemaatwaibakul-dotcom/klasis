@@ -401,7 +401,7 @@
                 <i class="fas fa-eye me-2"></i>Pengunjung / Pengamat
             </button>
             <div class="login-hint">Pengunjung masuk tanpa akun (hanya lihat). Default admin: <code>admin</code> / <code>admin123</code></div>
-            <div class="login-version app-version-text" data-testid="login-version">REV 9 • Build 2026-10-06</div>
+            <div class="login-version app-version-text" data-testid="login-version">REV 11 • Build 2026-10-06</div>
         </div>
     </div>
 
@@ -1144,7 +1144,7 @@
             </div>
         </div>
 
-        <div class="app-version-footer" data-testid="app-version-footer"><i class="fas fa-code-branch me-1"></i><span class="app-version-text">REV 9 • Build 2026-10-06</span></div>
+        <div class="app-version-footer" data-testid="app-version-footer"><i class="fas fa-code-branch me-1"></i><span class="app-version-text">REV 11 • Build 2026-10-06</span></div>
     </div><!-- end main-content -->
 
     <!-- ===== MODAL EDIT GENERIC ===== -->
@@ -4385,13 +4385,22 @@ function hapusHariLiburUI(id){
   body.role-pengunjung [onclick*="cetakRekap"], body.role-pengunjung [onclick*="downloadCSV"],
   body.role-pengunjung #baUploadCard{display:none !important;}
   body.role-pengunjung .top-navbar button[onclick*="refreshSemuaData"]{display:none !important;}
-  /* Bahan Ajar: maximize modal via CSS sendiri. Tombol maximize/fullscreen bawaan
-     Drive viewer diblokir oleh sandbox iframe Apps Script sehingga viewer terasa
-     "stuck" — toggle .ba-max memperbesar modal hingga hampir penuh layar. */
-  #baPreviewModal.ba-max .modal-dialog{max-width:98vw;width:98vw;height:96vh;margin:2vh auto;}
-  #baPreviewModal.ba-max .modal-content{height:96vh;display:flex;flex-direction:column;}
-  #baPreviewModal.ba-max .modal-body{flex:1;min-height:0;}
-  #baPreviewModal.ba-max .modal-body iframe{height:100% !important;}
+  /* Bahan Ajar: overlay buatan sendiri (BUKAN modal Bootstrap). Modal Bootstrap
+     di dalam iframe sandbox Apps Script sering "freeze" — halaman tidak bisa
+     ditekan sama sekali. Overlay ini murni CSS+JS milik aplikasi: tombol tutup,
+     zoom, dan maximize pasti berfungsi. */
+  .ba-overlay{position:fixed;inset:0;background:rgba(3,6,18,.88);z-index:10050;display:none;align-items:center;justify-content:center;padding:12px;}
+  .ba-overlay.ba-open{display:flex;}
+  .ba-dialog{background:#131a3f;border:1px solid var(--stroke,#2a325f);border-radius:14px;width:min(1100px,94vw);height:85vh;display:flex;flex-direction:column;overflow:hidden;}
+  .ba-dialog.ba-max{width:98vw;height:96vh;}
+  .ba-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--stroke,#2a325f);color:#e8ebff;font-weight:600;}
+  .ba-tools{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .ba-tools .ba-btn{display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border:1px solid var(--stroke,#2a325f);color:#e8ebff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:14px;line-height:1;text-decoration:none;}
+  .ba-tools .ba-btn:hover{background:rgba(255,255,255,.18);}
+  #baZoomLabel{font-size:12px;color:#8a93c8;min-width:46px;text-align:center;font-family:'JetBrains Mono',monospace;}
+  .ba-body{flex:1;min-height:0;overflow:auto;background:#0b1030;}
+  .ba-body iframe{width:100%;height:100%;border:0;display:block;}
+  body.ba-lock{overflow:hidden !important;}
 </style>
 <script>
 (function(){
@@ -4617,6 +4626,9 @@ function hapusHariLiburUI(id){
       '<p class="small text-muted mb-2">Peringatan tampil lintas kelas dalam satu kelompok (saling mengingatkan). '+
       'Pengampu bersifat read-only; aksi sembunyikan/tampilkan hanya untuk Admin &amp; Moderator, dibatasi wilayah/kelompok masing-masing.</p>'+
       '<button class="btn btn-sm btn-outline-secondary mb-2" onclick="loadHalamanPeringatan()" data-testid="btn-muat-ulang-peringatan"><i class="fas fa-rotate"></i> Muat Ulang</button>'+
+      '<button class="btn btn-sm btn-outline-warning mb-2 ms-2" id="btnDiagnosa" style="display:none;" onclick="fbDiagnosaPeringatan()" data-testid="btn-diagnosa-peringatan"><i class="fas fa-stethoscope me-1"></i>Diagnosa (Admin)</button>'+
+      '<button class="btn btn-sm btn-outline-danger mb-2 ms-2" id="btnResetDismiss" style="display:none;" onclick="fbResetDismiss()" data-testid="btn-reset-dismiss"><i class="fas fa-eye me-1"></i>Tampilkan Semua</button>'+
+      '<pre id="fbDiagOut" class="small" style="display:none;max-height:320px;overflow:auto;background:rgba(0,0,0,.3);padding:12px;border-radius:10px;white-space:pre-wrap;" data-testid="diagnosa-output"></pre>'+
       '<div id="fbWarnFull" data-testid="halaman-peringatan"></div>'+
       '</div>';
   }
@@ -4637,13 +4649,19 @@ function hapusHariLiburUI(id){
       '<div class="fb-card p-3"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0"><i class="fas fa-file-pdf me-2"></i>Daftar Bahan Ajar</h6>'+
       '<button class="btn btn-sm btn-outline-secondary" onclick="fbLoadBahanAjar()" data-testid="ba-refresh-btn"><i class="fas fa-rotate"></i></button></div>'+
       '<div class="table-responsive"><table class="table table-striped align-middle"><thead><tr><th>Judul</th><th>Target</th><th>Pengunggah</th><th>Ukuran</th><th>Aksi</th></tr></thead><tbody id="baBody" data-testid="ba-list"><tr><td colspan="5" class="text-center text-muted">Memuat...</td></tr></tbody></table></div></div>'+
-      '<div class="modal fade" id="baPreviewModal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content" style="background:#131a3f;">'+
-      '<div class="modal-header"><h6 class="modal-title" id="baPreviewTitle">Baca Bahan Ajar</h6><div class="d-flex align-items-center gap-2">'+
-      '<button type="button" class="btn btn-sm btn-outline-light" id="baMaxBtn" onclick="fbToggleBaMax()" title="Perbesar / pulihkan" data-testid="ba-maximize-btn"><i class="fas fa-expand"></i></button>'+
-      '<a class="btn btn-sm btn-outline-light" id="baOpenTab" href="#" target="_blank" rel="noopener" title="Buka di tab baru (kontrol zoom penuh)" data-testid="ba-open-tab"><i class="fas fa-up-right-from-square"></i></a>'+
-      '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div></div>'+
-      '<div class="modal-body p-0"><iframe id="baPreviewFrame" data-testid="ba-preview-frame" title="Pratinjau PDF" style="width:100%;height:75vh;border:0;" allow="autoplay; fullscreen" allowfullscreen="true"></iframe></div>'+
-      '</div></div></div>';
+      '<div class="ba-overlay" id="baPreviewOverlay" data-testid="ba-preview-overlay">'+
+      '<div class="ba-dialog" id="baDialog">'+
+      '<div class="ba-head"><span id="baPreviewTitle">Baca Bahan Ajar</span>'+
+      '<div class="ba-tools">'+
+      '<button type="button" class="ba-btn" onclick="fbBaZoom(-1)" title="Perkecil" data-testid="ba-zoom-out">&minus;</button>'+
+      '<span id="baZoomLabel">100%</span>'+
+      '<button type="button" class="ba-btn" onclick="fbBaZoom(1)" title="Perbesar" data-testid="ba-zoom-in">+</button>'+
+      '<button type="button" class="ba-btn" id="baMaxBtn" onclick="fbToggleBaMax()" title="Layar penuh / pulihkan" data-testid="ba-maximize-btn"><i class="fas fa-expand"></i></button>'+
+      '<a class="ba-btn" id="baOpenTab" href="#" target="_blank" rel="noopener" title="Buka di tab baru (kontrol penuh)" data-testid="ba-open-tab"><i class="fas fa-up-right-from-square"></i></a>'+
+      '<button type="button" class="ba-btn" onclick="fbCloseBahanAjar()" title="Tutup" data-testid="ba-close-btn"><i class="fas fa-xmark"></i></button>'+
+      '</div></div>'+
+      '<div class="ba-body"><iframe id="baPreviewFrame" data-testid="ba-preview-frame" title="Pratinjau PDF" allow="autoplay; fullscreen" allowfullscreen="true"></iframe></div>'+
+      '</div></div>';
   }
 
   // ---------- HALAMAN DASHBOARD PUBLIK (Pengunjung/Pengamat, read-only) ----------
@@ -4952,9 +4970,9 @@ function hapusHariLiburUI(id){
     var ref=document.getElementById('dashPeringatanAbsen');
     if(ref&&ref.parentNode) ref.parentNode.insertBefore(el, ref.nextSibling); else dash.insertBefore(el, dash.firstChild);
   }
-  function renderWarnBlock(topik, items){
+  function renderWarnBlock(topik, items, readOnly){
     if(!items||!items.length) return '';
-    var cfg=WARN_TOPIK[topik], kind=cfg.kind, canD=canDismiss();
+    var cfg=WARN_TOPIK[topik], kind=cfg.kind, canD=canDismiss()&&!readOnly;
     var rows=items.slice(0,120).map(function(x){
       var arr=(kind==='kelas'?x.kelas:x.pengampu)||[];
       var chips=arr.map(function(nm){
@@ -5008,7 +5026,9 @@ function hapusHariLiburUI(id){
     var arr=(d.peng||{})[kind]||[];
     return arr.reduce(function(n,x){return n+((x.kelas||x.pengampu)||[]).length;},0);
   }
-  // Dashboard: RINGKASAN saja (tidak menumpuk) + tombol menuju menu Kelola Peringatan.
+  // Dashboard: DAFTAR LENGKAP nama kelas/pengampu yang belum mengisi (read-only,
+  // bukan hanya total). Aksi sembunyikan (dismiss) TIDAK ditampilkan di dashboard —
+  // hanya di menu Kelola Peringatan, khusus Admin/Moderator.
   window.loadDashPeringatan=function(){
     ensureWarnCard();
     var c=ctx(); if(!c.username||roleLc()==='pengunjung') return;
@@ -5016,19 +5036,32 @@ function hapusHariLiburUI(id){
       _fetchPeringatan(function(){
         var box=document.getElementById('fbWarnCard'); if(!box) return;
         var old=document.getElementById('dashPeringatanAbsen'); if(old) old.classList.add('d-none');
-        var items=Object.keys(WARN_TOPIK).map(function(k){ var n=_warnCount(k); if(!n) return ''; return '<span class="badge bg-'+WARN_TOPIK[k].c+' me-1 mb-1"><i class="fas '+WARN_TOPIK[k].i+' me-1"></i>'+WARN_TOPIK[k].t+': '+n+'</span>'; }).join('');
-        if(!items){ box.innerHTML=''; return; }
-        var btnLabel=canDismiss()?'Kelola Peringatan':'Lihat Peringatan';
-        box.innerHTML='<div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2" data-testid="dash-peringatan-ringkasan">'+
-          '<div><b><i class="fas fa-bell me-2"></i>Ringkasan Peringatan</b><div class="mt-1">'+items+'</div></div>'+
-          '<button type="button" class="btn btn-sm btn-dark" onclick="fbGotoPeringatan()" data-testid="btn-kelola-peringatan"><i class="fas fa-arrow-right me-1"></i>'+btnLabel+'</button></div>';
+        var d=window._fbWarnData, p=d.peng||{};
+        var blocks=renderWarnBlock('absenSiswa',d.siswa,true)+
+          renderWarnBlock('absenPengampu',p.absenPengampu,true)+
+          renderWarnBlock('jurnal',p.jurnal,true)+
+          renderWarnBlock('bukuMingguan',p.bukuMingguan,true);
+        if(!blocks){ box.innerHTML=''; return; }
+        var btn=canDismiss()?'<div class="mt-2 text-end"><button type="button" class="btn btn-sm btn-dark" onclick="fbGotoPeringatan()" data-testid="btn-kelola-peringatan"><i class="fas fa-arrow-right me-1"></i>Kelola / Sembunyikan Peringatan</button></div>':'';
+        box.innerHTML='<div class="fb-card p-3" data-testid="dash-peringatan-detail">'+blocks+btn+'</div>';
       });
     });
   };
   window.fbGotoPeringatan=function(){ var link=document.querySelector('.fb-nav[onclick*="fbPeringatan"]'); showPage('fbPeringatan', link); };
   // Halaman Kelola Peringatan: daftar lengkap. Dismiss hanya Admin/Moderator (dibatasi wilayah masing-masing);
   // pengampu melihat lintas kelas dalam satu kelompok secara read-only (saling mengingatkan).
+  window.fbDiagnosaPeringatan=function(){
+    var out=document.getElementById('fbDiagOut'); if(!out) return;
+    out.style.display='block'; out.textContent='Memuat diagnosa...';
+    run().withSuccessHandler(function(d){ out.textContent=d; }).withFailureHandler(function(e){ out.textContent='Gagal: '+((e&&e.message)||e); }).getDiagnosaPeringatan(ctx());
+  };
+  window.fbResetDismiss=function(){
+    if(!confirm('Tampilkan kembali SEMUA peringatan yang pernah disembunyikan? Seluruh aturan sembunyikan akan dihapus.')) return;
+    run().withSuccessHandler(function(m){ toast(m,'success'); loadDashPeringatan(); loadHalamanPeringatan(); }).withFailureHandler(err).resetSemuaDismiss(ctx());
+  };
   window.loadHalamanPeringatan=function(){
+    var db=document.getElementById('btnDiagnosa'); if(db) db.style.display=isAdm()?'inline-block':'none';
+    var rb=document.getElementById('btnResetDismiss'); if(rb) rb.style.display=isAdm()?'inline-block':'none';
     var box=document.getElementById('fbWarnFull'); if(!box) return;
     box.innerHTML='<p class="text-muted small">Memuat peringatan...</p>';
     loadGroups(function(){
@@ -5083,26 +5116,32 @@ function hapusHariLiburUI(id){
     reader.readAsDataURL(file);
   };
   window.fbDelBahanAjar=function(id){ if(!confirm('Hapus bahan ajar ini? File di Google Drive juga dihapus.'))return; run().withSuccessHandler(function(m){toast(m,'success'); fbLoadBahanAjar();}).withFailureHandler(err).hapusBahanAjar(ctx(), id); };
+  // Pembaca PDF memakai OVERLAY buatan sendiri (bukan modal Bootstrap).
+  // Alasan: modal Bootstrap di dalam iframe sandbox Apps Script sering membuat
+  // halaman "freeze" (backdrop nyangkut, tombol tidak bisa ditekan). Semua tombol
+  // di overlay ini 100% JS milik aplikasi sehingga pasti bisa ditekan.
+  var _baZoom=1;
+  function _baApplyZoom(){ var fr=document.getElementById('baPreviewFrame'); if(fr){ try{ fr.style.zoom=_baZoom; }catch(e){} } var lb=document.getElementById('baZoomLabel'); if(lb) lb.textContent=Math.round(_baZoom*100)+'%'; }
+  window.fbBaZoom=function(dir){ _baZoom=Math.min(2.5,Math.max(0.5,Math.round((_baZoom+dir*0.1)*100)/100)); _baApplyZoom(); };
   window.fbPreviewBahanAjar=function(id){
     var f=(window._fbBahan||[]).filter(function(x){return x.id===id;})[0]; if(!f) return;
     document.getElementById('baPreviewTitle').textContent=f.judul;
     var ot=document.getElementById('baOpenTab'); if(ot) ot.href=f.urlView;
+    _baZoom=1; _baApplyZoom();
+    var dg=document.getElementById('baDialog'); if(dg) dg.classList.remove('ba-max');
     document.getElementById('baPreviewFrame').src=f.urlView; // embed Google Drive viewer
-    var el=document.getElementById('baPreviewModal');
-    el.classList.remove('ba-max'); _baMaxIcon(false);
-    if(window.bootstrap && bootstrap.Modal){ bootstrap.Modal.getOrCreateInstance(el).show(); } else { el.style.display='block'; }
+    document.getElementById('baPreviewOverlay').classList.add('ba-open');
+    document.body.classList.add('ba-lock');
   };
-  // Maximize memakai CSS sendiri: tombol maximize bawaan Drive viewer tidak
-  // berfungsi di dalam iframe sandbox Apps Script (request fullscreen diblokir),
-  // sehingga viewer terasa "stuck". Toggle ini memperbesar modal hingga hampir
-  // penuh layar; kontrol zoom (+/-) bawaan Drive tetap berfungsi normal.
-  function _baMaxIcon(on){ var b=document.getElementById('baMaxBtn'); if(b) b.innerHTML='<i class="fas '+(on?'fa-compress':'fa-expand')+'"></i>'; }
-  window.fbToggleBaMax=function(){
-    var el=document.getElementById('baPreviewModal'); if(!el) return;
-    var on=!el.classList.contains('ba-max');
-    el.classList.toggle('ba-max',on); _baMaxIcon(on);
+  window.fbCloseBahanAjar=function(){
+    var ov=document.getElementById('baPreviewOverlay'); if(!ov) return;
+    ov.classList.remove('ba-open');
+    document.body.classList.remove('ba-lock');
+    var fr=document.getElementById('baPreviewFrame'); if(fr) fr.src='about:blank';
+    var dg=document.getElementById('baDialog'); if(dg) dg.classList.remove('ba-max');
   };
-  document.addEventListener('hidden.bs.modal',function(e){ if(e.target && e.target.id==='baPreviewModal'){ var fr=document.getElementById('baPreviewFrame'); if(fr) fr.src='about:blank'; e.target.classList.remove('ba-max'); _baMaxIcon(false); } });
+  window.fbToggleBaMax=function(){ var dg=document.getElementById('baDialog'); if(dg) dg.classList.toggle('ba-max'); };
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var ov=document.getElementById('baPreviewOverlay'); if(ov&&ov.classList.contains('ba-open')) fbCloseBahanAjar(); } });
 
   // ---------- DASHBOARD PUBLIK (Pengunjung/Pengamat) ----------
   var _pubChart1=null,_pubChart2=null;

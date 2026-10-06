@@ -2,7 +2,15 @@
 
 File final: `Code.gs` dan `Index.html` di folder ini. Data & fitur lama tetap utuh.
 
-## Perbaikan REV 10 (terbaru)
+## Perbaikan REV 11 (terbaru)
+1. Akar masalah kelas 11 ditemukan lewat Diagnosa: seluruh peringatannya tertutup
+   aturan "sembunyikan" (dismiss) yang pernah dibuat. Diagnosa kini juga MENAMPILKAN
+   daftar aturan dismiss yang menutup absen siswa (kelompok, tanggal, siapa pembuatnya).
+2. Tombol baru "Tampilkan Semua" (Admin) di menu Kelola Peringatan: menghapus semua
+   aturan sembunyikan sehingga seluruh peringatan (termasuk kelas 11) tampil kembali.
+   Setelah itu, sembunyikan ulang hanya tanggal tertentu yang memang perlu.
+
+## Perbaikan REV 10
 1. Bahan ajar: modal Bootstrap DIGANTI TOTAL dengan overlay buatan aplikasi
    (murni CSS+JS). Modal Bootstrap di dalam iframe sandbox Apps Script memang
    sering freeze — halaman tidak bisa ditekan sama sekali. Kini tombol Tutup,

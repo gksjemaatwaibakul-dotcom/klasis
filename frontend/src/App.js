@@ -5,22 +5,22 @@ const FILES = [
   {
     key: "code-gs",
     name: "Code.gs",
-    desc: "Backend Apps Script (REV 10) — peringatan kelas 11 + diagnosa, dashboard publik, chart.",
-    href: "/download/Code_REV10_2026-10-06.gs?v=rev10",
+    desc: "Backend Apps Script (REV 11) — diagnosa aturan dismiss + reset sembunyian (kasus kelas 11).",
+    href: "/download/Code_REV11_2026-10-06.gs?v=rev11",
     downloadName: "Code.gs",
-    size: "173 KB",
-    hash: "ab9c4e27b2e6e261",
+    size: "175 KB",
+    hash: "9776002b4036243e",
     icon: FileCode2,
     accent: "accent-amber",
   },
   {
     key: "index-html",
     name: "Index.html",
-    desc: "Frontend Web App (REV 10) — pembaca PDF anti-stuck, dashboard berisi nama kelas & guru.",
-    href: "/download/Index_REV10_2026-10-06.html.txt?v=rev10",
+    desc: "Frontend Web App (REV 11) — pembaca PDF anti-stuck, dashboard nama lengkap, tombol Tampilkan Semua.",
+    href: "/download/Index_REV11_2026-10-06.html.txt?v=rev11",
     downloadName: "Index.html",
-    size: "294 KB",
-    hash: "9d399a7b46905147",
+    size: "295 KB",
+    hash: "f895da20eccac6f0",
     icon: FileText,
     accent: "accent-sky",
   },
@@ -28,10 +28,10 @@ const FILES = [
     key: "panduan-md",
     name: "PANDUAN.md",
     desc: "Langkah menerapkan & deploy ulang ke project Apps Script Anda.",
-    href: "/download/PANDUAN_REV10.md?v=rev10",
+    href: "/download/PANDUAN_REV11.md?v=rev11",
     downloadName: "PANDUAN.md",
     size: "4 KB",
-    hash: "7ed525a84506df52",
+    hash: "fb99f47eb4883987",
     icon: BookOpen,
     accent: "accent-emerald",
   },
@@ -60,7 +60,7 @@ export default function App() {
             <span className="dl-title-sub">SMA Kristen Waibakul</span>
           </h1>
           <p className="dl-lead">
-            Versi <strong style={{ color: "var(--amber)" }}>REV 10 · Build 2026-10-06</strong> —
+            Versi <strong style={{ color: "var(--amber)" }}>REV 11 · Build 2026-10-06</strong> —
             nama file berversi agar tidak tertukar cache unduhan lama. Setelah
             deploy, pastikan teks versi ini muncul di footer halaman login.
           </p>
