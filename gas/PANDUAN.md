@@ -16,6 +16,9 @@ File final: `Code.gs` dan `Index.html` di folder ini. Data & fitur lama tetap ut
 4. Baca bahan ajar: tombol Perbesar kini memakai maximize milik aplikasi (modal
    hampir penuh layar) karena tombol fullscreen bawaan Drive viewer diblokir
    sandbox Apps Script. Ditambah tombol "Buka di tab baru" untuk kontrol penuh.
+5. Auto Changelog: nomor revisi + tanggal build kini tampil di footer halaman
+   login dan footer aplikasi (diambil dari `APP_REV` & `APP_BUILD_DATE` di atas
+   Code.gs — naikkan nilainya setiap kali Anda deploy perubahan).
 
 ## Langkah
 1. Buka project Apps Script Anda (dari spreadsheet: Extensions → Apps Script).

@@ -62,6 +62,11 @@ const KONFIG = {
   PERINGATAN_MAX_HARI: 120
 };
 
+// Versi aplikasi — ditampilkan di footer (halaman login & aplikasi) agar mudah
+// memastikan versi yang sedang berjalan. Naikkan setiap kali deploy perubahan.
+var APP_REV = 'REV 9';
+var APP_BUILD_DATE = '2026-10-06';
+
 
 const SISWA_HEADERS = [
   'ID', 'No Urut', 'Nama Siswa', 'Kelas',
@@ -108,7 +113,10 @@ function getPublicAppInfo() {
     nipGuru: s[3] || '',
     namaKepsek: s[4] || '',
     nipKepsek: s[5] || '',
-    logoUrl: s[6] || ''
+    logoUrl: s[6] || '',
+    rev: APP_REV,
+    buildDate: APP_BUILD_DATE,
+    versi: APP_REV + ' \u2022 Build ' + APP_BUILD_DATE
   };
 }
 

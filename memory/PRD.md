@@ -44,6 +44,8 @@ Konfigurasi default: Ganjil Jul–Des, Genap Jan–Jun, triwulan per 3 bulan (di
 - Dashboard publik: `getPublikDashboard` mundur ke minggu terakhir yang punya data (maks 12 minggu) bila minggu ini kosong + flag `mingguIni` & label dinamis di UI
 - Bahan ajar: maximize modal via CSS sendiri (`.ba-max`) karena fullscreen Drive viewer diblokir sandbox GAS; iframe `allowfullscreen`; tombol "buka di tab baru"
 - Uji: 47/47 tes simulasi Node lolos (6 tes baru REV 9); file unduhan di frontend/public/download diperbarui
+- Auto Changelog: `APP_REV`/`APP_BUILD_DATE` di Code.gs → `getPublicAppInfo().versi` → footer login (`.login-version`) & footer aplikasi (`.app-version-footer`) via `applyAppInfo`
+- WA terjadwal (P3) dibatalkan user: tidak ada anggaran API gateway; pengingat wa.me manual (menu Pengingat WhatsApp) tetap tersedia
 
 ## Backlog / Next
 - P1: Verifikasi di environment Google Apps Script nyata oleh user (deploy ulang Web App)
