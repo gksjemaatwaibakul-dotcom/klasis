@@ -3416,16 +3416,24 @@ function _isKelasLibur(info, tgl, kelas) { return !!info.global[tgl] || !!(info.
 // kelas yang belum punya jadwal TETAP ikut dalam loop (wajib di semua hari aktif).
 // Pengecualian hanya untuk hari libur bertanda (ditangani pemanggil via _isKelasLibur).
 var HARI_INDONESIA = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+// Normalisasi nama hari agar ejaan di sheet Jadwal selalu cocok dengan nama
+// hari hasil perhitungan tanggal: huruf besar/kecil diabaikan, tanda baca
+// dibuang ("Jum'at" -> jumat), alias umum dikenali ("Ahad" -> minggu).
+function _normHari(h) {
+  var s = _t(h).toLowerCase().replace(/[''‘`.\s-]/g, '');
+  var alias = { ahad: 'minggu', minggu: 'minggu', senin: 'senin', selasa: 'selasa', rabu: 'rabu', kamis: 'kamis', jumat: 'jumat', sabtu: 'sabtu' };
+  return alias[s] || s;
+}
 function _hariDariTanggalStr(tgl) {
   var d = new Date(tgl + 'T00:00:00');
-  return HARI_INDONESIA[d.getDay()];
+  return _normHari(HARI_INDONESIA[d.getDay()]);
 }
 function _hariAktifDariJadwal(maxHari) {
   var jadwal = _readSheet(SHEET_NAMES.JADWAL);
   var hariAny = {};   // nama hari yang punya jadwal (kelas apa pun)
   var kelasHari = {}; // kelas -> { hari: true }
   jadwal.forEach(function (r) {
-    var hari = _t(r[1]), kls = _t(r[5]); // Jadwal: [ID, Hari, Jam Mulai, Jam Selesai, Mapel, Kelas]
+    var hari = _normHari(r[1]), kls = _t(r[5]); // Jadwal: [ID, Hari, Jam Mulai, Jam Selesai, Mapel, Kelas]
     if (!hari) return;
     hariAny[hari] = true;
     if (kls) { if (!kelasHari[kls]) kelasHari[kls] = {}; kelasHari[kls][hari] = true; }
@@ -3451,6 +3459,14 @@ function _hariAktifDariJadwal(maxHari) {
     }
     cur.setDate(cur.getDate() + 1);
   }
+  // Fallback: kelas yang punya entri jadwal tetapi nama harinya tidak pernah
+  // cocok dengan tanggal nyata (ejaan tak dikenal) diperlakukan seperti kelas
+  // tanpa jadwal -> wajib di semua hari aktif, sehingga TETAP diperingatkan.
+  Object.keys(kelasHari).forEach(function (k) {
+    var cocok = false;
+    for (var i = 0; i < dates.length; i++) { if (wajib[dates[i]][k]) { cocok = true; break; } }
+    if (!cocok) delete kelasHari[k];
+  });
   return { dates: dates, wajib: wajib, kelasHari: kelasHari };
 }
 // Apakah kelas wajib mengisi pada tanggal tsb? Kelas tanpa jadwal -> wajib setiap hari aktif.
@@ -3847,16 +3863,31 @@ function getPublikDashboard() {
   var sem = getPeriodeRange('semester');
 
   // --- Kehadiran siswa minggu berjalan ---
-  var kh = { H: 0, S: 0, I: 0, A: 0, T: 0 };
+  // Jika minggu ini belum ada data sama sekali, mundur ke minggu terakhir yang
+  // punya data (maks 12 minggu ke belakang) agar grafik publik tidak kosong.
   var KODE = { 'Hadir': 'H', 'H': 'H', 'Sakit': 'S', 'S': 'S', 'Izin': 'I', 'I': 'I', 'Terlambat': 'T', 'T': 'T' };
-  _readSheet(SHEET_NAMES.ABSENSI).forEach(function (r) {
-    var tgl = _t(r[c.tanggal]);
-    if (tgl < week.start || tgl > week.end) return;
-    var st = _t(r[c.status]);
-    if (/^al/i.test(st)) { kh.A++; return; } // kompatibel ejaan lama
-    var code = KODE[st];
-    if (code) kh[code]++;
-  });
+  var absRows = _readSheet(SHEET_NAMES.ABSENSI);
+  function _hitungKehadiranMinggu(wk) {
+    var k = { H: 0, S: 0, I: 0, A: 0, T: 0 }, tot = 0;
+    absRows.forEach(function (r) {
+      var tgl = _t(r[c.tanggal]);
+      if (tgl < wk.start || tgl > wk.end) return;
+      var st = _t(r[c.status]);
+      if (/^al/i.test(st)) { k.A++; tot++; return; } // kompatibel ejaan lama
+      var code = KODE[st];
+      if (code) { k[code]++; tot++; }
+    });
+    return { counts: k, total: tot };
+  }
+  function _geserMinggu(wk, n) {
+    var tz = Session.getScriptTimeZone();
+    var s = new Date(wk.start + 'T00:00:00'); s.setDate(s.getDate() - 7 * n);
+    var e = new Date(wk.end + 'T00:00:00'); e.setDate(e.getDate() - 7 * n);
+    return { start: Utilities.formatDate(s, tz, 'yyyy-MM-dd'), end: Utilities.formatDate(e, tz, 'yyyy-MM-dd') };
+  }
+  var mingguDipakai = week, hk = _hitungKehadiranMinggu(week), mundur = 0;
+  while (hk.total === 0 && mundur < 12) { mundur++; mingguDipakai = _geserMinggu(week, mundur); hk = _hitungKehadiranMinggu(mingguDipakai); }
+  var kh = hk.counts;
 
   // --- Tingkat kehadiran ibadah (absen buku mingguan, semester berjalan) ---
   var ib = { kumpul: 0, tidak: 0 };
@@ -3906,7 +3937,7 @@ function getPublikDashboard() {
 
   return {
     appInfo: getPublicAppInfo(),
-    kehadiran: { labels: ['Hadir', 'Sakit', 'Izin', 'Alpa', 'Terlambat'], keys: ['H', 'S', 'I', 'A', 'T'], counts: kh, tglMulai: week.start, tglAkhir: week.end },
+    kehadiran: { labels: ['Hadir', 'Sakit', 'Izin', 'Alpa', 'Terlambat'], keys: ['H', 'S', 'I', 'A', 'T'], counts: kh, tglMulai: mingguDipakai.start, tglAkhir: mingguDipakai.end, mingguIni: mundur === 0 },
     ibadah: { kumpul: ib.kumpul, tidak: ib.tidak, periode: sem.label },
     totalSiswa: totalSiswa,
     totalKelas: kelasList.length,

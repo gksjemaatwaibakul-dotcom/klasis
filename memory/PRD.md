@@ -38,6 +38,13 @@ Konfigurasi default: Ganjil Jul–Des, Genap Jan–Jun, triwulan per 3 bulan (di
 - Terminologi: Pengampuh→Pengampu & Alfa→Alpa global; migrasi Role di _ensureAuthSchema; rename/merge sheet AbsensiPengampuh→AbsensiPengampu; normalisasi /^al/i untuk data lama
 - Uji: 41/41 tes simulasi Node lolos; screenshot UI (login, publik, dashboard admin, kelola peringatan, bahan ajar) OK
 
+## Perbaikan REV 9 (2026-10-06)
+- Bug kelas 11: `_normHari()` menormalisasi nama hari dari sheet Jadwal ("Jum'at"/"ahad"/huruf kecil); fallback — kelas dengan hari jadwal yang tak pernah cocok tanggal nyata diperlakukan tanpa jadwal (tetap diperingatkan)
+- Dashboard: fungsi lama `loadDashPeringatan` (penampil nama/kelas) dinonaktifkan jadi stub; dashboard hanya ringkasan badge; detail + dismiss hanya di menu Kelola Peringatan (Admin/Moderator dismiss, Pengampu read-only — sesuai desain)
+- Dashboard publik: `getPublikDashboard` mundur ke minggu terakhir yang punya data (maks 12 minggu) bila minggu ini kosong + flag `mingguIni` & label dinamis di UI
+- Bahan ajar: maximize modal via CSS sendiri (`.ba-max`) karena fullscreen Drive viewer diblokir sandbox GAS; iframe `allowfullscreen`; tombol "buka di tab baru"
+- Uji: 47/47 tes simulasi Node lolos (6 tes baru REV 9); file unduhan di frontend/public/download diperbarui
+
 ## Backlog / Next
 - P1: Verifikasi di environment Google Apps Script nyata oleh user (deploy ulang Web App)
 - P2: Opsi edit tanggal mulai/akhir semester via UI Pengaturan (saat ini via KONFIG)

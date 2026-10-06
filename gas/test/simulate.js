@@ -287,6 +287,35 @@ ok(apHariIni && apHariIni.pengampu.indexOf('Guru Sebelas') >= 0, 'pengampu yang 
 const jHariIni = (pw.jurnal || []).filter((x) => x.tanggal === todayStr)[0];
 ok(jHariIni && jHariIni.kelas.indexOf('11B') >= 0, 'jurnal belum diisi muncul per kelas');
 
+section('REV 9: Normalisasi nama hari pada Jadwal (bug kelas 11 tidak muncul)');
+// Kelas baru dengan ejaan hari tidak baku: "Jum'at" (apostrof) & nama hari ngawur.
+ssObj.getSheetByName('Kelas').appendRow(['K4', '11C']);
+ssObj.getSheetByName('Kelas').appendRow(['K5', '11D']);
+ssObj.getSheetByName('Jadwal').appendRow(['J991', "Jum'at", '07:00', '08:00', 'Pendidikan Agama', '11C']);
+ssObj.getSheetByName('Jadwal').appendRow(['J992', 'Hari Baik', '07:00', '08:00', 'Pendidikan Agama', '11D']);
+hasil = GAS.getPeringatanAbsenSiswaPersisten(ADMIN);
+let kelasTerlihat = {};
+hasil.forEach((x) => x.kelas.forEach((k) => { kelasTerlihat[k] = true; }));
+ok(kelasTerlihat['11C'] === true, 'ejaan "Jum\'at" tetap dikenali -> 11C diperingatkan');
+ok(kelasTerlihat['11D'] === true, 'nama hari tak dikenal -> 11D diperlakukan tanpa jadwal & tetap diperingatkan');
+let salahHari11C = false;
+hasil.forEach((x) => { if (x.kelas.indexOf('11C') >= 0 && new Date(x.tanggal + 'T00:00:00').getDay() !== 5) salahHari11C = true; });
+ok(!salahHari11C, '11C hanya diperingatkan pada hari Jumat saja');
+
+section('REV 9: Chart publik memakai minggu data terakhir bila minggu ini kosong');
+const absSheet = ssObj.getSheetByName('Absensi');
+const absBackup = absSheet.rows.map((r) => r.slice());
+absSheet.rows = [absBackup[0].slice()];
+const d3 = new Date(); d3.setDate(d3.getDate() - 21);
+const d3s = formatDate(d3, null, 'yyyy-MM-dd');
+absSheet.appendRow(['AX1', d3s + ' 07:05:00', d3s, '12A', 'Pendidikan Agama', '1', 'Siswa Empat', 'Hadir']);
+const pub2 = GAS.getPublikDashboard();
+const tot2 = pub2.kehadiran.keys.reduce((n, k) => n + (pub2.kehadiran.counts[k] || 0), 0);
+ok(tot2 === 1, 'minggu ini kosong -> grafik memakai minggu terakhir yang punya data (1 entri)');
+ok(pub2.kehadiran.mingguIni === false, 'penanda mingguIni=false saat memakai data mundur');
+ok(pub2.kehadiran.tglMulai <= d3s && pub2.kehadiran.tglAkhir >= d3s, 'rentang yang dilaporkan mencakup tanggal data lama');
+absSheet.rows = absBackup;
+
 console.log('\n========================================');
 console.log('HASIL: ' + pass + ' lolos, ' + fail + ' gagal');
 process.exit(fail ? 1 : 0);

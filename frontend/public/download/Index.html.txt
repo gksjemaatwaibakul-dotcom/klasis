@@ -4298,21 +4298,12 @@ function hapusAktivitasLogUI(){
 // ============================================================
 // PERINGATAN ABSEN MINGGU BERJALAN — Masalah 3
 // ============================================================
-function loadDashPeringatan(){
-    if (!currentUser) return;
-    const ctx = { role: currentUser.role, username: currentUser.username, kelasDiampu: currentUser.kelasDiampu };
-    google.script.run.withSuccessHandler(function(res){
-        const box = document.getElementById('dashPeringatanAbsen');
-        const txt = document.getElementById('dashPeringatanText');
-        if (!box || !txt) return;
-        if (res && res.kelas && res.kelas.length > 0){
-            txt.innerHTML = 'Minggu ini (' + escHtml(formatTanggalId(res.start)) + ' s.d. ' + escHtml(formatTanggalId(res.end)) + ') <b>belum ada absen siswa</b> untuk kelas: <b>' + res.kelas.map(escHtml).join(', ') + '</b>. Mohon segera diisi.';
-            box.classList.remove('d-none');
-        } else {
-            box.classList.add('d-none');
-        }
-    }).withFailureHandler(function(){ }).getKelasBelumAbsen(ctx);
-}
+// DINONAKTIFKAN (REV 9): dashboard HANYA menampilkan ringkasan jumlah peringatan.
+// Versi lama fungsi ini menampilkan daftar nama/kelas di dashboard; sengaja
+// dikosongkan agar tidak pernah tampil lagi dari alur pemanggilan mana pun.
+// Implementasi aktif ada di blok Fitur Baru (window.loadDashPeringatan) yang
+// menimpa stub ini saat halaman dimuat.
+function loadDashPeringatan(){ /* stub — lihat window.loadDashPeringatan di blok Fitur Baru */ }
 
 // ============================================================
 // HARI LIBUR (admin) — Masalah 4
@@ -4388,6 +4379,13 @@ function hapusHariLiburUI(id){
   body.role-pengunjung [onclick*="cetakRekap"], body.role-pengunjung [onclick*="downloadCSV"],
   body.role-pengunjung #baUploadCard{display:none !important;}
   body.role-pengunjung .top-navbar button[onclick*="refreshSemuaData"]{display:none !important;}
+  /* Bahan Ajar: maximize modal via CSS sendiri. Tombol maximize/fullscreen bawaan
+     Drive viewer diblokir oleh sandbox iframe Apps Script sehingga viewer terasa
+     "stuck" — toggle .ba-max memperbesar modal hingga hampir penuh layar. */
+  #baPreviewModal.ba-max .modal-dialog{max-width:98vw;width:98vw;height:96vh;margin:2vh auto;}
+  #baPreviewModal.ba-max .modal-content{height:96vh;display:flex;flex-direction:column;}
+  #baPreviewModal.ba-max .modal-body{flex:1;min-height:0;}
+  #baPreviewModal.ba-max .modal-body iframe{height:100% !important;}
 </style>
 <script>
 (function(){
@@ -4634,8 +4632,11 @@ function hapusHariLiburUI(id){
       '<button class="btn btn-sm btn-outline-secondary" onclick="fbLoadBahanAjar()" data-testid="ba-refresh-btn"><i class="fas fa-rotate"></i></button></div>'+
       '<div class="table-responsive"><table class="table table-striped align-middle"><thead><tr><th>Judul</th><th>Target</th><th>Pengunggah</th><th>Ukuran</th><th>Aksi</th></tr></thead><tbody id="baBody" data-testid="ba-list"><tr><td colspan="5" class="text-center text-muted">Memuat...</td></tr></tbody></table></div></div>'+
       '<div class="modal fade" id="baPreviewModal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content" style="background:#131a3f;">'+
-      '<div class="modal-header"><h6 class="modal-title" id="baPreviewTitle">Baca Bahan Ajar</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>'+
-      '<div class="modal-body p-0"><iframe id="baPreviewFrame" data-testid="ba-preview-frame" title="Pratinjau PDF" style="width:100%;height:75vh;border:0;" allow="autoplay"></iframe></div>'+
+      '<div class="modal-header"><h6 class="modal-title" id="baPreviewTitle">Baca Bahan Ajar</h6><div class="d-flex align-items-center gap-2">'+
+      '<button type="button" class="btn btn-sm btn-outline-light" id="baMaxBtn" onclick="fbToggleBaMax()" title="Perbesar / pulihkan" data-testid="ba-maximize-btn"><i class="fas fa-expand"></i></button>'+
+      '<a class="btn btn-sm btn-outline-light" id="baOpenTab" href="#" target="_blank" rel="noopener" title="Buka di tab baru (kontrol zoom penuh)" data-testid="ba-open-tab"><i class="fas fa-up-right-from-square"></i></a>'+
+      '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div></div>'+
+      '<div class="modal-body p-0"><iframe id="baPreviewFrame" data-testid="ba-preview-frame" title="Pratinjau PDF" style="width:100%;height:75vh;border:0;" allow="autoplay; fullscreen" allowfullscreen="true"></iframe></div>'+
       '</div></div></div>';
   }
 
@@ -4649,7 +4650,7 @@ function hapusHariLiburUI(id){
         '<div class="col-6 col-md-3"><div class="stat-card" style="background:#fd7e14;"><div class="d-flex justify-content-between"><div><div class="stat-num" id="pubGuru" data-testid="pub-total-guru">0</div><div class="stat-label">Pengampu &amp; Pengelola</div></div><i class="fas fa-user-tie"></i></div></div></div>'+
       '</div>'+
       '<div class="row g-3 mb-3">'+
-        '<div class="col-md-6"><div class="card"><div class="card-header bg-primary text-white"><i class="fas fa-chart-pie me-2"></i>Kehadiran Siswa (Minggu Ini)</div><div class="card-body"><div id="pubKehadiranSummary" class="small text-muted mb-2" data-testid="pub-kehadiran-summary"></div><div style="position:relative;height:260px;"><canvas id="chartPublikKehadiran" data-testid="chart-publik-kehadiran"></canvas></div></div></div></div>'+
+        '<div class="col-md-6"><div class="card"><div class="card-header bg-primary text-white"><i class="fas fa-chart-pie me-2"></i><span id="pubKehadiranHeader">Kehadiran Siswa (Minggu Ini)</span></div><div class="card-body"><div id="pubKehadiranSummary" class="small text-muted mb-2" data-testid="pub-kehadiran-summary"></div><div style="position:relative;height:260px;"><canvas id="chartPublikKehadiran" data-testid="chart-publik-kehadiran"></canvas></div></div></div></div>'+
         '<div class="col-md-6"><div class="card"><div class="card-header bg-info text-white"><i class="fas fa-book-bookmark me-2"></i>Kehadiran Ibadah (Buku Mingguan, Semester Ini)</div><div class="card-body"><div id="pubIbadahSummary" class="small text-muted mb-2" data-testid="pub-ibadah-summary"></div><div style="position:relative;height:260px;"><canvas id="chartPublikIbadah" data-testid="chart-publik-ibadah"></canvas></div></div></div></div>'+
       '</div>'+
       '<div class="row g-3 mb-3">'+
@@ -5079,11 +5080,23 @@ function hapusHariLiburUI(id){
   window.fbPreviewBahanAjar=function(id){
     var f=(window._fbBahan||[]).filter(function(x){return x.id===id;})[0]; if(!f) return;
     document.getElementById('baPreviewTitle').textContent=f.judul;
+    var ot=document.getElementById('baOpenTab'); if(ot) ot.href=f.urlView;
     document.getElementById('baPreviewFrame').src=f.urlView; // embed Google Drive viewer
     var el=document.getElementById('baPreviewModal');
+    el.classList.remove('ba-max'); _baMaxIcon(false);
     if(window.bootstrap && bootstrap.Modal){ bootstrap.Modal.getOrCreateInstance(el).show(); } else { el.style.display='block'; }
   };
-  document.addEventListener('hidden.bs.modal',function(e){ if(e.target && e.target.id==='baPreviewModal'){ var fr=document.getElementById('baPreviewFrame'); if(fr) fr.src='about:blank'; } });
+  // Maximize memakai CSS sendiri: tombol maximize bawaan Drive viewer tidak
+  // berfungsi di dalam iframe sandbox Apps Script (request fullscreen diblokir),
+  // sehingga viewer terasa "stuck". Toggle ini memperbesar modal hingga hampir
+  // penuh layar; kontrol zoom (+/-) bawaan Drive tetap berfungsi normal.
+  function _baMaxIcon(on){ var b=document.getElementById('baMaxBtn'); if(b) b.innerHTML='<i class="fas '+(on?'fa-compress':'fa-expand')+'"></i>'; }
+  window.fbToggleBaMax=function(){
+    var el=document.getElementById('baPreviewModal'); if(!el) return;
+    var on=!el.classList.contains('ba-max');
+    el.classList.toggle('ba-max',on); _baMaxIcon(on);
+  };
+  document.addEventListener('hidden.bs.modal',function(e){ if(e.target && e.target.id==='baPreviewModal'){ var fr=document.getElementById('baPreviewFrame'); if(fr) fr.src='about:blank'; e.target.classList.remove('ba-max'); _baMaxIcon(false); } });
 
   // ---------- DASHBOARD PUBLIK (Pengunjung/Pengamat) ----------
   var _pubChart1=null,_pubChart2=null;
@@ -5095,8 +5108,10 @@ function hapusHariLiburUI(id){
       document.getElementById('pubKelompok').textContent=d.totalKelompok;
       document.getElementById('pubGuru').textContent=(d.guru||[]).length;
       var kh=d.kehadiran||{labels:[],keys:[],counts:{}};
+      var hd1=document.getElementById('pubKehadiranHeader');
+      if(hd1) hd1.textContent=(kh.mingguIni===false)?'Kehadiran Siswa (Minggu Data Terakhir)':'Kehadiran Siswa (Minggu Ini)';
       var s1=document.getElementById('pubKehadiranSummary');
-      if(s1){ var tot=(kh.keys||[]).reduce(function(n,k){return n+(kh.counts[k]||0);},0); s1.innerHTML='Periode <b>'+h(kh.tglMulai)+'</b> s.d. <b>'+h(kh.tglAkhir)+'</b> — total entri: <b>'+tot+'</b>'; }
+      if(s1){ var tot=(kh.keys||[]).reduce(function(n,k){return n+(kh.counts[k]||0);},0); s1.innerHTML='Periode <b>'+h(kh.tglMulai)+'</b> s.d. <b>'+h(kh.tglAkhir)+'</b> — total entri: <b>'+tot+'</b>'+(kh.mingguIni===false?' <span class="text-warning">(minggu ini belum ada data — ditampilkan minggu terakhir yang ada)</span>':''); }
       if(typeof Chart!=='undefined'){
         var c1=document.getElementById('chartPublikKehadiran');
         if(c1){ if(_pubChart1) _pubChart1.destroy(); _pubChart1=new Chart(c1.getContext('2d'),{type:'pie',data:{labels:kh.labels,datasets:[{data:(kh.keys||[]).map(function(k){return kh.counts[k]||0;}),backgroundColor:['#198754','#ffc107','#0dcaf0','#dc3545','#6610f2'],borderColor:'rgba(255,255,255,.15)',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#c7cdea'}}}}}); }

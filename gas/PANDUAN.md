@@ -2,6 +2,21 @@
 
 File final: `Code.gs` dan `Index.html` di folder ini. Data & fitur lama tetap utuh.
 
+## Perbaikan REV 9 (terbaru)
+1. Peringatan kelas 11: nama hari di sheet Jadwal kini dinormalisasi ("Jum'at",
+   "ahad", huruf kecil, dsb tetap dikenali). Kelas yang nama hari jadwalnya tidak
+   pernah cocok dengan tanggal nyata diperlakukan seperti tanpa jadwal sehingga
+   TETAP diperingatkan di semua hari aktif.
+2. Dashboard hanya menampilkan RINGKASAN jumlah peringatan (badge + tombol).
+   Fungsi lama penampil nama/kelas di dashboard dinonaktifkan total. Daftar nama
+   + aksi sembunyikan (dismiss) hanya di menu "Kelola Peringatan": Admin/Moderator
+   bisa dismiss, Pengampu read-only (sesuai desain).
+3. Grafik kehadiran di Dashboard Publik: bila minggu ini belum ada data, otomatis
+   menampilkan minggu terakhir yang punya data (maks 12 minggu ke belakang).
+4. Baca bahan ajar: tombol Perbesar kini memakai maximize milik aplikasi (modal
+   hampir penuh layar) karena tombol fullscreen bawaan Drive viewer diblokir
+   sandbox Apps Script. Ditambah tombol "Buka di tab baru" untuk kontrol penuh.
+
 ## Langkah
 1. Buka project Apps Script Anda (dari spreadsheet: Extensions → Apps Script).
 2. Salin seluruh isi `Code.gs` (timpa isi lama) dan `Index.html` (timpa isi lama).

@@ -7,7 +7,7 @@ const FILES = [
     name: "Code.gs",
     desc: "Backend Google Apps Script (final) — seluruh logika, API, dan konfigurasi KONFIG.",
     href: "/download/Code.gs",
-    size: "169 KB",
+    size: "171 KB",
     icon: FileCode2,
     accent: "accent-amber",
   },
@@ -15,8 +15,9 @@ const FILES = [
     key: "index-html",
     name: "Index.html",
     desc: "Frontend Web App (final) — seluruh tampilan, dashboard, dan interaksi UI.",
-    href: "/download/Index.html",
-    size: "290 KB",
+    href: "/download/Index.html.txt",
+    downloadName: "Index.html",
+    size: "292 KB",
     icon: FileText,
     accent: "accent-sky",
   },
@@ -25,7 +26,7 @@ const FILES = [
     name: "PANDUAN.md",
     desc: "Langkah menerapkan & deploy ulang ke project Apps Script Anda.",
     href: "/download/PANDUAN.md",
-    size: "2 KB",
+    size: "3 KB",
     icon: BookOpen,
     accent: "accent-emerald",
   },
@@ -66,7 +67,7 @@ export default function App() {
               <a
                 key={f.key}
                 href={f.href}
-                download
+                download={f.downloadName || true}
                 className={`dl-card ${f.accent}`}
                 data-testid={`download-${f.key}`}
               >
