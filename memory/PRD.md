@@ -25,6 +25,10 @@ Konfigurasi default: Ganjil Jul–Des, Genap Jan–Jun, triwulan per 3 bulan (di
 - /app/gas/test/preview.html — preview UI dengan mock google.script.run (serve: python3 -m http.server)
 - /app/gas/PANDUAN.md — panduan menerapkan ke project Apps Script
 
+## Log Import (2026-10-06)
+- Repo GitHub https://github.com/gksjemaatwaibakul-dotcom/klasis (branch main, commit fd265a0) diimpor ke /app; git remote origin terhubung dan tracking origin/main
+- Dependencies: pip install -r backend/requirements.txt OK; yarn install OK; semua service supervisor RUNNING; backend /api merespons; frontend 200 (splash template bawaan repo); gas/test/simulate.js 41/41 PASS
+
 ## Yang Sudah Diimplementasikan (2026-10-06)
 - Fase 1: _hariAktifDariJadwal() menggantikan _hariAktifDariAbsensi; kelas tanpa jadwal tetap ikut loop; libur global/per-kelompok dikecualikan; running text durasi dinamis (fbTickerSetSpeed, 90 px/detik)
 - Fase 2: halaman fbPeringatan (menu Kelola Peringatan), dashboard hanya ringkasan jumlah per topik + tombol; dismiss tetap server-side Admin/Moderator per wilayah
