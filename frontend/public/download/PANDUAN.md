@@ -2,7 +2,21 @@
 
 File final: `Code.gs` dan `Index.html` di folder ini. Data & fitur lama tetap utuh.
 
-## Perbaikan REV 9 (terbaru)
+## Perbaikan REV 10 (terbaru)
+1. Bahan ajar: modal Bootstrap DIGANTI TOTAL dengan overlay buatan aplikasi
+   (murni CSS+JS). Modal Bootstrap di dalam iframe sandbox Apps Script memang
+   sering freeze — halaman tidak bisa ditekan sama sekali. Kini tombol Tutup,
+   Zoom +/-, Layar Penuh, dan Buka-di-Tab-Baru dijamin berfungsi.
+2. Dashboard kembali menampilkan DAFTAR LENGKAP nama kelas & pengampu yang
+   belum mengisi (absen siswa, absen pengampu, jurnal, buku mingguan) — read-only
+   tanpa checkbox. Aksi sembunyikan (dismiss) hanya ada di menu Kelola Peringatan
+   untuk Admin/Moderator.
+3. Tombol "Diagnosa (Admin)" baru di menu Kelola Peringatan: menelusuri per kelas
+   apakah punya jadwal, berapa tanggal wajib isi, berapa yang belum diisi, dan
+   berapa yang disembunyikan aturan dismiss — untuk melacak kasus kelas yang
+   peringatannya tidak muncul (mis. kelas 11). Salin hasilnya ke pengembang.
+
+## Perbaikan REV 9
 1. Peringatan kelas 11: nama hari di sheet Jadwal kini dinormalisasi ("Jum'at",
    "ahad", huruf kecil, dsb tetap dikenali). Kelas yang nama hari jadwalnya tidak
    pernah cocok dengan tanggal nyata diperlakukan seperti tanpa jadwal sehingga

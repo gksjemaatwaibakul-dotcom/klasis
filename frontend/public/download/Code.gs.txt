@@ -64,7 +64,7 @@ const KONFIG = {
 
 // Versi aplikasi — ditampilkan di footer (halaman login & aplikasi) agar mudah
 // memastikan versi yang sedang berjalan. Naikkan setiap kali deploy perubahan.
-var APP_REV = 'REV 9';
+var APP_REV = 'REV 10';
 var APP_BUILD_DATE = '2026-10-06';
 
 
@@ -3475,7 +3475,7 @@ function _hariAktifDariJadwal(maxHari) {
     for (var i = 0; i < dates.length; i++) { if (wajib[dates[i]][k]) { cocok = true; break; } }
     if (!cocok) delete kelasHari[k];
   });
-  return { dates: dates, wajib: wajib, kelasHari: kelasHari };
+  return { dates: dates, wajib: wajib, kelasHari: kelasHari, hariAny: hariAny };
 }
 // Apakah kelas wajib mengisi pada tanggal tsb? Kelas tanpa jadwal -> wajib setiap hari aktif.
 function _kelasWajibPada(aktif, tgl, kelas) {
@@ -3517,6 +3517,45 @@ function getPeringatanAbsenSiswaPersisten(userCtx) {
     if (belum.length) hasil.push({ tanggal: tgl, kelas: belum });
   });
   return hasil.sort(function (a, b) { return a.tanggal < b.tanggal ? 1 : -1; });
+}
+
+// Diagnosa peringatan absen siswa: menelusuri alasan setiap kelas diperingatkan
+// atau tidak (jadwal, hari aktif, sudah isi, libur, disembunyikan). Khusus Admin —
+// hasilnya bisa disalin dan dikirim ke pengembang bila ada kelas yang "hilang".
+function getDiagnosaPeringatan(userCtx) {
+  if (_fbRole(userCtx) !== 'admin') throw new Error('Hanya Admin yang dapat menjalankan diagnosa.');
+  _ensureFiturSheets();
+  var aktif = _hariAktifDariJadwal(KONFIG.PERINGATAN_MAX_HARI);
+  var info = _liburInfo();
+  var isDismissed = _makeDismissMatcher();
+  var c = _absensiCols();
+  var sudah = {};
+  _readSheet(SHEET_NAMES.ABSENSI).forEach(function (r) {
+    var tgl = _t(r[c.tanggal]);
+    if (!sudah[tgl]) sudah[tgl] = {};
+    sudah[tgl][_t(r[c.kelas])] = true;
+  });
+  var L = [];
+  L.push('Hari yang punya jadwal (setelah normalisasi): ' + (Object.keys(aktif.hariAny).join(', ') || '(KOSONG — periksa kolom Hari di sheet Jadwal!)'));
+  L.push('Tanggal aktif dlm ' + KONFIG.PERINGATAN_MAX_HARI + ' hari terakhir: ' + aktif.dates.length + (aktif.dates.length ? ' (' + aktif.dates[0] + ' s.d. ' + aktif.dates[aktif.dates.length - 1] + ')' : ' — TIDAK ADA, periksa sheet Jadwal!'));
+  L.push('');
+  var kelasList = _readSheet(SHEET_NAMES.KELAS).map(function (r) { return _t(r[1]); }).filter(Boolean);
+  if (!kelasList.length) L.push('(Sheet Kelas kosong!)');
+  kelasList.forEach(function (kls) {
+    var kh = aktif.kelasHari[kls];
+    var wajibTgl = aktif.dates.filter(function (tgl) {
+      return _kelasWajibPada(aktif, tgl, kls) && !info.global[tgl] && !_isKelasLibur(info, tgl, kls);
+    });
+    var belum = wajibTgl.filter(function (tgl) { return !(sudah[tgl] && sudah[tgl][kls]); });
+    var dism = belum.filter(function (tgl) { return isDismissed('absenSiswa', kls, '', tgl); });
+    L.push('- ' + kls +
+      ' | jadwal: ' + (kh ? Object.keys(kh).join(', ') : '(tidak ada -> wajib semua hari aktif)') +
+      ' | wajib isi: ' + wajibTgl.length + ' tgl' +
+      ' | belum isi: ' + belum.length + ' tgl' +
+      ' | disembunyikan: ' + dism.length +
+      (belum.length ? ' | contoh: ' + belum.slice(Math.max(0, belum.length - 3)).join(', ') : ''));
+  });
+  return L.join('\n');
 }
 
 // Req #7: pengampu belum mengisi absen pengampu / jurnal / buku mingguan.

@@ -38,6 +38,13 @@ Konfigurasi default: Ganjil Jul–Des, Genap Jan–Jun, triwulan per 3 bulan (di
 - Terminologi: Pengampuh→Pengampu & Alfa→Alpa global; migrasi Role di _ensureAuthSchema; rename/merge sheet AbsensiPengampuh→AbsensiPengampu; normalisasi /^al/i untuk data lama
 - Uji: 41/41 tes simulasi Node lolos; screenshot UI (login, publik, dashboard admin, kelola peringatan, bahan ajar) OK
 
+## Perbaikan REV 10 (2026-10-06)
+- Bahan ajar anti-stuck: modal Bootstrap diganti overlay buatan sendiri (`.ba-overlay`) — tombol Tutup/Zoom/Layar Penuh/Tab Baru pasti berfungsi di sandbox GAS; ESC menutup
+- Dashboard: kembali menampilkan daftar lengkap nama kelas & pengampu yang belum mengisi (read-only); dismiss hanya di menu Kelola Peringatan (Admin/Moderator). `renderWarnBlock(topik, items, readOnly)`
+- Diagnosa: `getDiagnosaPeringatan(userCtx)` (admin) + tombol "Diagnosa (Admin)" di Kelola Peringatan — telusur per kelas (jadwal/wajib/belum/dismiss) untuk kasus kelas 11
+- `_hariAktifDariJadwal` kini juga mengembalikan `hariAny`
+- Versi: `APP_REV='REV 10'`; file unduhan berversi di frontend/public/download
+
 ## Perbaikan REV 9 (2026-10-06)
 - Bug kelas 11: `_normHari()` menormalisasi nama hari dari sheet Jadwal ("Jum'at"/"ahad"/huruf kecil); fallback — kelas dengan hari jadwal yang tak pernah cocok tanggal nyata diperlakukan tanpa jadwal (tetap diperingatkan)
 - Dashboard: fungsi lama `loadDashPeringatan` (penampil nama/kelas) dinonaktifkan jadi stub; dashboard hanya ringkasan badge; detail + dismiss hanya di menu Kelola Peringatan (Admin/Moderator dismiss, Pengampu read-only — sesuai desain)
