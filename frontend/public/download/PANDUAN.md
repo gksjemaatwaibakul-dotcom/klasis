@@ -2,7 +2,17 @@
 
 File final: `Code.gs` dan `Index.html` di folder ini. Data & fitur lama tetap utuh.
 
-## Perbaikan REV 11 (terbaru)
+## Perbaikan REV 12 (terbaru)
+1. Hari Libur kini bisa diisi BANYAK TANGGAL sekaligus: mode Satu hari, Rentang
+   tanggal, Satu minggu (Sen–Min), Satu bulan penuh, atau Beberapa tanggal terpilih.
+   Opsi "Hanya tandai hari yang ada jadwalnya" menyaring hari tanpa jadwal.
+2. Setiap libur disimpan per-tanggal untuk kelompok kelas tertentu — SPESIFIK pada
+   tanggal yang dipilih, TIDAK berlaku permanen. Otomatis menekan peringatan absen
+   siswa DAN absen pengampu untuk kelompok & tanggal terkait.
+3. Inilah cara yang benar untuk "meniadakan peringatan" (menggantikan dismiss
+   permanen). Untuk mengembalikan, cukup hapus baris libur pada tanggal tsb.
+
+## Perbaikan REV 11
 1. Akar masalah kelas 11 ditemukan lewat Diagnosa: seluruh peringatannya tertutup
    aturan "sembunyikan" (dismiss) yang pernah dibuat. Diagnosa kini juga MENAMPILKAN
    daftar aturan dismiss yang menutup absen siswa (kelompok, tanggal, siapa pembuatnya).

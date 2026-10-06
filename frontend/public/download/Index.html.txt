@@ -401,7 +401,7 @@
                 <i class="fas fa-eye me-2"></i>Pengunjung / Pengamat
             </button>
             <div class="login-hint">Pengunjung masuk tanpa akun (hanya lihat). Default admin: <code>admin</code> / <code>admin123</code></div>
-            <div class="login-version app-version-text" data-testid="login-version">REV 11 • Build 2026-10-06</div>
+            <div class="login-version app-version-text" data-testid="login-version">REV 12 • Build 2026-10-06</div>
         </div>
     </div>
 
@@ -1144,7 +1144,7 @@
             </div>
         </div>
 
-        <div class="app-version-footer" data-testid="app-version-footer"><i class="fas fa-code-branch me-1"></i><span class="app-version-text">REV 11 • Build 2026-10-06</span></div>
+        <div class="app-version-footer" data-testid="app-version-footer"><i class="fas fa-code-branch me-1"></i><span class="app-version-text">REV 12 • Build 2026-10-06</span></div>
     </div><!-- end main-content -->
 
     <!-- ===== MODAL EDIT GENERIC ===== -->
@@ -4609,12 +4609,30 @@ function hapusHariLiburUI(id){
     return '<div class="fb-card p-3">'+
       '<h5 class="mb-3"><i class="fas fa-calendar-xmark me-2"></i>Tandai Hari Libur</h5>'+
       '<div class="row g-2">'+
-        '<div class="col-md-3"><label class="form-label">Tanggal</label><input type="date" class="form-control" id="hlTanggal"></div>'+
-        '<div class="col-md-5"><label class="form-label">Cakupan</label><select class="form-select" id="hlKelompok"></select></div>'+
-        '<div class="col-md-4"><label class="form-label">Keterangan</label><input class="form-control" id="hlKet" placeholder="mis. Hari Raya"></div>'+
+        '<div class="col-md-4"><label class="form-label">Cakupan (Kelompok Kelas)</label><select class="form-select" id="hlKelompok" data-testid="libur-kelompok"></select></div>'+
+        '<div class="col-md-4"><label class="form-label">Mode Tanggal</label><select class="form-select" id="hlMode" onchange="fbLiburMode()" data-testid="libur-mode">'+
+          '<option value="satu">Satu hari</option>'+
+          '<option value="rentang">Rentang tanggal</option>'+
+          '<option value="minggu">Satu minggu (Sen–Min)</option>'+
+          '<option value="bulan">Satu bulan penuh</option>'+
+          '<option value="beberapa">Beberapa tanggal terpilih</option>'+
+        '</select></div>'+
+        '<div class="col-md-4"><label class="form-label">Keterangan</label><input class="form-control" id="hlKet" placeholder="mis. Hari Raya / Ujian" data-testid="libur-ket"></div>'+
       '</div>'+
-      '<button class="btn btn-primary mt-2" onclick="fbSaveLibur()"><i class="fas fa-save"></i> Simpan Hari Libur</button>'+
-      '<p class="small text-muted mt-2 mb-0">Hari libur menghilangkan peringatan absen/jurnal/buku untuk cakupan &amp; tanggal terkait.</p>'+
+      '<div class="row g-2 mt-1">'+
+        '<div class="col-12" id="hlBox-satu"><input type="date" class="form-control" id="hlTanggal" data-testid="libur-tgl-satu"></div>'+
+        '<div class="col-12" id="hlBox-rentang" style="display:none;"><div class="row g-2"><div class="col-sm-6"><label class="form-label small">Dari</label><input type="date" class="form-control" id="hlStart" data-testid="libur-start"></div><div class="col-sm-6"><label class="form-label small">Sampai</label><input type="date" class="form-control" id="hlEnd" data-testid="libur-end"></div></div></div>'+
+        '<div class="col-12" id="hlBox-minggu" style="display:none;"><label class="form-label small">Pilih tanggal mana saja dalam minggu tsb</label><input type="date" class="form-control" id="hlWeekRef" data-testid="libur-week"></div>'+
+        '<div class="col-12" id="hlBox-bulan" style="display:none;"><label class="form-label small">Pilih bulan</label><input type="month" class="form-control" id="hlMonth" data-testid="libur-month"></div>'+
+        '<div class="col-12" id="hlBox-beberapa" style="display:none;">'+
+          '<div class="d-flex gap-2 align-items-end flex-wrap"><div><label class="form-label small">Tambah tanggal</label><input type="date" class="form-control" id="hlPick" data-testid="libur-pick"></div>'+
+          '<button type="button" class="btn btn-outline-light" onclick="fbLiburAddPick()" data-testid="libur-pick-add"><i class="fas fa-plus"></i></button></div>'+
+          '<div id="hlChips" class="mt-2 d-flex flex-wrap gap-1" data-testid="libur-chips"></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="form-check mt-2" id="hlAktifBox"><input class="form-check-input" type="checkbox" id="hlHanyaAktif" checked data-testid="libur-hanya-aktif"><label class="form-check-label small" for="hlHanyaAktif">Hanya tandai hari yang ada jadwalnya (abaikan hari tanpa jadwal)</label></div>'+
+      '<div class="mt-2"><button class="btn btn-primary" onclick="fbSaveLibur()" data-testid="libur-save"><i class="fas fa-save"></i> Simpan Hari Libur</button> <span id="hlPreview" class="small text-muted ms-2"></span></div>'+
+      '<p class="small text-muted mt-2 mb-0">Penetapan libur bersifat <b>spesifik per tanggal</b> (tidak permanen) dan otomatis menekan peringatan absen siswa <b>maupun absen pengampu</b> untuk cakupan &amp; tanggal terkait.</p>'+
       '</div>'+
       '<div class="fb-card p-3"><h6>Daftar Hari Libur</h6><div class="table-responsive"><table class="table table-striped"><thead><tr><th>Tanggal</th><th>Cakupan</th><th>Keterangan</th><th>Aksi</th></tr></thead><tbody id="hlBody"></tbody></table></div></div>';
   }
@@ -4893,6 +4911,8 @@ function hapusHariLiburUI(id){
 
   // ---------- HARI LIBUR ----------
   window.fbLoadLibur=function(){
+    if(typeof fbLiburMode==='function') fbLiburMode();
+    if(!window._fbHariAktif){ run().withSuccessHandler(function(a){ window._fbHariAktif=a||[]; }).withFailureHandler(function(){ window._fbHariAktif=[]; }).getHariAktifJadwal(); }
     loadGroups(function(){
       var sel=document.getElementById('hlKelompok'); if(!sel) return;
       var opts=''; if(isAdm()) opts+='<option value="">Semua (Global)</option>';
@@ -4907,13 +4927,60 @@ function hapusHariLiburUI(id){
     }).withFailureHandler(err).getHariLiburFB(ctx());
   };
   window.fbSaveLibur=function(){
-    var tgl=document.getElementById('hlTanggal').value; if(!tgl) return toast('Pilih tanggal','warning');
-    var kel=document.getElementById('hlKelompok').value; var ket=document.getElementById('hlKet').value.trim();
-    run().withSuccessHandler(function(m){ toast(m,'success'); document.getElementById('hlKet').value=''; fbLoadLibur(); if(typeof loadDashPeringatan==='function') loadDashPeringatan(); }).withFailureHandler(err).tambahHariLiburFB(ctx(), tgl, ket, kel);
+    var kel=document.getElementById('hlKelompok').value;
+    var ket=(document.getElementById('hlKet')||{}).value.trim();
+    var dates=_collectLiburDates();
+    if(!dates.length) return toast('Tidak ada tanggal yang dipilih untuk mode ini.','warning');
+    if(dates.length>60 && !confirm('Anda akan menandai '+dates.length+' tanggal sebagai libur. Lanjutkan?')) return;
+    run().withSuccessHandler(function(m){ toast(m,'success'); if(document.getElementById('hlKet')) document.getElementById('hlKet').value=''; _hlPicks=[]; _renderChips(); fbLoadLibur(); if(typeof loadDashPeringatan==='function') loadDashPeringatan(); }).withFailureHandler(err).tambahHariLiburBatch(ctx(), dates, ket, kel);
   };
   window.fbDelLibur=function(id){ if(!confirm('Hapus hari libur ini?'))return; run().withSuccessHandler(function(m){ toast(m,'success'); fbLoadLibur(); if(typeof loadDashPeringatan==='function') loadDashPeringatan(); }).withFailureHandler(err).hapusHariLiburFB(ctx(), id); };
 
-  // ---------- UPGRADE PENGAMPU -> MODERATOR ----------
+  // ---------- HARI LIBUR: multi-mode (satu/rentang/minggu/bulan/beberapa) ----------
+  var _hlPicks=[];
+  function _ymd(d){ var m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'); return d.getFullYear()+'-'+m+'-'+dd; }
+  function _parseYmd(s){ var p=String(s).split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+  window.fbLiburMode=function(){
+    var m=(document.getElementById('hlMode')||{}).value||'satu';
+    ['satu','rentang','minggu','bulan','beberapa'].forEach(function(k){ var el=document.getElementById('hlBox-'+k); if(el) el.style.display=(k===m)?'':'none'; });
+    var ab=document.getElementById('hlAktifBox'); if(ab) ab.style.display=(m==='satu')?'none':'';
+  };
+  window.fbLiburAddPick=function(){
+    var v=(document.getElementById('hlPick')||{}).value; if(!v) return;
+    if(_hlPicks.indexOf(v)<0) _hlPicks.push(v); _hlPicks.sort();
+    _renderChips();
+  };
+  function _renderChips(){
+    var box=document.getElementById('hlChips'); if(!box) return;
+    box.innerHTML=_hlPicks.map(function(t){ return '<span class="badge bg-secondary">'+h(tglId(t))+' <a href="#" onclick="fbLiburDelPick(\''+a(t)+'\');return false;" class="text-white ms-1">&times;</a></span>'; }).join('')||'<span class="small text-muted">Belum ada tanggal.</span>';
+  }
+  window.fbLiburDelPick=function(t){ _hlPicks=_hlPicks.filter(function(x){return x!==t;}); _renderChips(); };
+  // Kumpulkan daftar tanggal sesuai mode. Jika "hanya hari aktif" dicentang,
+  // saring memakai hari yang punya jadwal (window._fbHariAktif dari server).
+  function _collectLiburDates(){
+    var m=(document.getElementById('hlMode')||{}).value||'satu', out=[];
+    if(m==='satu'){ var v=(document.getElementById('hlTanggal')||{}).value; if(v) out=[v]; return out; }
+    if(m==='rentang'){
+      var s=(document.getElementById('hlStart')||{}).value, e=(document.getElementById('hlEnd')||{}).value;
+      if(!s||!e) return []; var ds=_parseYmd(s), de=_parseYmd(e); if(de<ds) return [];
+      for(var d=new Date(ds); d<=de; d.setDate(d.getDate()+1)) out.push(_ymd(d));
+    } else if(m==='minggu'){
+      var ref=(document.getElementById('hlWeekRef')||{}).value; if(!ref) return [];
+      var r=_parseYmd(ref), dow=(r.getDay()+6)%7; var mon=new Date(r); mon.setDate(r.getDate()-dow);
+      for(var i=0;i<7;i++){ var dd=new Date(mon); dd.setDate(mon.getDate()+i); out.push(_ymd(dd)); }
+    } else if(m==='bulan'){
+      var mo=(document.getElementById('hlMonth')||{}).value; if(!mo) return [];
+      var pp=mo.split('-'), yr=+pp[0], mm=+pp[1]; var last=new Date(yr,mm,0).getDate();
+      for(var day=1;day<=last;day++){ out.push(yr+'-'+String(mm).padStart(2,'0')+'-'+String(day).padStart(2,'0')); }
+    } else if(m==='beberapa'){ out=_hlPicks.slice(); }
+    // filter hanya hari aktif jadwal bila dicentang (mode selain "satu")
+    var only=(document.getElementById('hlHanyaAktif')||{}).checked;
+    if(m!=='satu' && only && window._fbHariAktif && window._fbHariAktif.length){
+      var set={}; window._fbHariAktif.forEach(function(x){ set[x]=true; });
+      out=out.filter(function(t){ var dow=_parseYmd(t).getDay(); return set[dow]; });
+    }
+    return out;
+  }
   window.fbLoadUpgrade=function(){
     loadGroups(function(){ chkGroups('upGroups', []); });
     run().withSuccessHandler(function(list){

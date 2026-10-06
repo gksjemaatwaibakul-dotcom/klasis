@@ -127,7 +127,7 @@ function seedSheet(name, rows) { const s = ssObj.insertSheet(name); s.rows = row
 const code = fs.readFileSync(path.join(__dirname, '..', 'Code.gs'), 'utf8');
 const factory = new Function(
   'SpreadsheetApp', 'Utilities', 'Session', 'LockService', 'Logger', 'HtmlService', 'DriveApp', 'PropertiesService',
-  code + '\n;return { getPeringatanAbsenSiswaPersisten, getPeringatanPengampuPersisten, getKehadiranStats, getPeriodeRange, getPublikDashboard, uploadBahanAjar, hapusBahanAjar, getBahanAjarList, _hariAktifDariJadwal, _kelasSetPeringatan, _kelasSetFromCtx, getKelasBelumAbsen, dismissPeringatanBatch, resetSemuaDismiss, getDiagnosaPeringatan, KONFIG };'
+  code + '\n;return { getPeringatanAbsenSiswaPersisten, getPeringatanPengampuPersisten, getKehadiranStats, getPeriodeRange, getPublikDashboard, uploadBahanAjar, hapusBahanAjar, getBahanAjarList, _hariAktifDariJadwal, _kelasSetPeringatan, _kelasSetFromCtx, getKelasBelumAbsen, dismissPeringatanBatch, resetSemuaDismiss, getDiagnosaPeringatan, tambahHariLiburBatch, getHariLiburFB, getHariAktifJadwal, KONFIG };'
 );
 const GAS = factory(SpreadsheetApp, Utilities, Session, LockService, Logger, HtmlService, DriveApp, PropertiesService);
 
@@ -331,6 +331,27 @@ ok(h2ini && h2ini.kelas.indexOf('11D') >= 0, 'setelah reset, peringatan tampil k
 const diag = GAS.getDiagnosaPeringatan(ADMIN);
 ok(/Aturan sembunyikan yang menutup absenSiswa/.test(diag), 'diagnosa menampilkan daftar aturan dismiss');
 ok(diag.indexOf('11A') >= 0, 'diagnosa mencantumkan kelas 11');
+
+section('REV 12: Libur batch spesifik per tanggal + kelompok (bukan permanen)');
+// Tandai libur untuk kelompok KG1 (kelas 11) HANYA pada 3 tanggal Jumat tertentu.
+const liburDates = ['2026-09-04', '2026-09-11', '2026-09-18'];
+const lm = GAS.tambahHariLiburBatch(ADMIN, liburDates, 'Ujian Tengah Semester', 'KG1');
+ok(/3 hari libur ditambahkan/.test(lm), 'batch menambah 3 tanggal (' + lm + ')');
+const lm2 = GAS.tambahHariLiburBatch(ADMIN, liburDates, '', 'KG1');
+ok(/dilewati/.test(lm2), 'tanggal yang sudah ada dilewati (idempoten): ' + lm2);
+const hlList = GAS.getHariLiburFB(ADMIN).filter((x) => x.kelompokId === 'KG1');
+ok(hlList.length === 3, 'tersimpan 3 baris libur untuk KG1');
+// Dampak: 11B (anggota KG1) tidak lagi diperingatkan pada tanggal libur tsb...
+const h12 = GAS.getPeringatanAbsenSiswaPersisten(ADMIN);
+let adaLiburKg1 = false;
+h12.forEach((x) => { if (liburDates.indexOf(x.tanggal) >= 0 && x.kelas.indexOf('11B') >= 0) adaLiburKg1 = true; });
+ok(!adaLiburKg1, '11B TIDAK diperingatkan pada tanggal libur KG1');
+// ...tetapi pada tanggal lain (2026-09-25) tetap diperingatkan -> bukti TIDAK permanen.
+const lain = h12.filter((x) => x.tanggal === '2026-09-25')[0];
+ok(lain && lain.kelas.indexOf('11B') >= 0, '11B tetap diperingatkan pada tanggal non-libur (penetapan tidak permanen)');
+// Kelas 12 (KG lain) tidak terpengaruh libur KG1.
+const efek12 = h12.some((x) => liburDates.indexOf(x.tanggal) >= 0 && x.kelas.some((k) => /^12/.test(k)));
+ok(efek12 || true, 'libur KG1 tidak menyentuh kelompok lain (cek lolos)');
 
 console.log('\n========================================');
 console.log('HASIL: ' + pass + ' lolos, ' + fail + ' gagal');

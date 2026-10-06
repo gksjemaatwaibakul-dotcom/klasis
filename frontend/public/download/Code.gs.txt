@@ -64,7 +64,7 @@ const KONFIG = {
 
 // Versi aplikasi — ditampilkan di footer (halaman login & aplikasi) agar mudah
 // memastikan versi yang sedang berjalan. Naikkan setiap kali deploy perubahan.
-var APP_REV = 'REV 11';
+var APP_REV = 'REV 12';
 var APP_BUILD_DATE = '2026-10-06';
 
 
@@ -3365,6 +3365,38 @@ function tambahHariLiburFB(userCtx, tanggal, keterangan, kelompokId) {
   });
 }
 
+// Tambah hari libur UNTUK BANYAK TANGGAL sekaligus (per hari/rentang/minggu/bulan
+// atau beberapa tanggal terpilih). Tiap tanggal disimpan sebagai baris tersendiri
+// sehingga penetapan SELALU spesifik per tanggal — tidak pernah berlaku permanen.
+function tambahHariLiburBatch(userCtx, tanggalList, keterangan, kelompokId) {
+  var roleLc = _fbRole(userCtx);
+  if (roleLc !== 'admin' && roleLc !== 'moderator') throw new Error('Hanya Admin/Moderator yang bisa menandai hari libur.');
+  kelompokId = _t(kelompokId);
+  if (roleLc === 'moderator') {
+    var mine = _getModeratorGroupIds(userCtx.username);
+    if (!kelompokId) throw new Error('Moderator harus memilih kelompok kelas untuk hari libur.');
+    if (mine.indexOf(kelompokId) < 0) throw new Error('Anda tidak mengelola kelompok tersebut.');
+  }
+  var list = (tanggalList || []).map(_t).filter(function (t) { return _isValidDate(t); });
+  // buang duplikat dalam input
+  var seen = {}, uniq = [];
+  list.forEach(function (t) { if (!seen[t]) { seen[t] = true; uniq.push(t); } });
+  if (!uniq.length) throw new Error('Tidak ada tanggal valid yang dipilih.');
+  return _withLock(function () {
+    var sheet = _ensureHariLiburSheet();
+    var existing = {};
+    _readSheet('HariLibur').forEach(function (r) { existing[_t(r[1]) + '|' + _t(r[3])] = true; });
+    var ket = _t(keterangan), tambah = 0, lewat = 0;
+    uniq.forEach(function (tgl) {
+      if (existing[tgl + '|' + kelompokId]) { lewat++; return; }
+      sheet.appendRow([_newId('HL'), tgl, ket, kelompokId]);
+      existing[tgl + '|' + kelompokId] = true; tambah++;
+    });
+    _logActivity('Tandai Hari Libur (batch)', tambah + ' tanggal' + (kelompokId ? ' [grup]' : ' [global]') + (ket ? (' - ' + ket) : ''), userCtx.username);
+    return tambah + ' hari libur ditambahkan' + (lewat ? (', ' + lewat + ' dilewati (sudah ada)') : '') + '.';
+  });
+}
+
 // Daftar hari libur beserta cakupan (global / nama kelompok).
 function getHariLiburFB(userCtx) {
   _ensureHariLiburSheet();
@@ -3415,6 +3447,16 @@ function _liburInfo() {
   return { global: glob, byDate: byDate };
 }
 function _isKelasLibur(info, tgl, kelas) { return !!info.global[tgl] || !!(info.byDate[tgl] && info.byDate[tgl][kelas]); }
+
+// Nomor hari (0=Min..6=Sab) yang memiliki jadwal mengajar — dipakai UI Hari Libur
+// untuk opsi "hanya tandai hari yang ada jadwalnya".
+function getHariAktifJadwal() {
+  var peta = { minggu: 0, senin: 1, selasa: 2, rabu: 3, kamis: 4, jumat: 5, sabtu: 6 };
+  var aktif = _hariAktifDariJadwal(KONFIG.PERINGATAN_MAX_HARI);
+  var out = [];
+  Object.keys(aktif.hariAny).forEach(function (h) { if (peta[h] !== undefined) out.push(peta[h]); });
+  return out;
+}
 
 // Hari aktif berbasis JADWAL MENGAJAR (BUKAN dari absensi yang sudah ada).
 // Perbaikan bug kelas 11: sebelumnya hari aktif dihitung dari tanggal yang sudah

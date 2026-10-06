@@ -5,22 +5,22 @@ const FILES = [
   {
     key: "code-gs",
     name: "Code.gs",
-    desc: "Backend Apps Script (REV 11) — diagnosa aturan dismiss + reset sembunyian (kasus kelas 11).",
-    href: "/download/Code_REV11_2026-10-06.gs?v=rev11",
+    desc: "Backend Apps Script (REV 12) — libur batch per tanggal & kelompok (menekan peringatan siswa + pengampu).",
+    href: "/download/Code_REV12_2026-10-06.gs?v=rev12",
     downloadName: "Code.gs",
-    size: "175 KB",
-    hash: "9776002b4036243e",
+    size: "177 KB",
+    hash: "8290f9b6702ada5a",
     icon: FileCode2,
     accent: "accent-amber",
   },
   {
     key: "index-html",
     name: "Index.html",
-    desc: "Frontend Web App (REV 11) — pembaca PDF anti-stuck, dashboard nama lengkap, tombol Tampilkan Semua.",
-    href: "/download/Index_REV11_2026-10-06.html.txt?v=rev11",
+    desc: "Frontend Web App (REV 12) — form libur multi-mode (hari/rentang/minggu/bulan/beberapa).",
+    href: "/download/Index_REV12_2026-10-06.html.txt?v=rev12",
     downloadName: "Index.html",
-    size: "295 KB",
-    hash: "f895da20eccac6f0",
+    size: "300 KB",
+    hash: "7a8519dcb495ee3f",
     icon: FileText,
     accent: "accent-sky",
   },
@@ -28,10 +28,10 @@ const FILES = [
     key: "panduan-md",
     name: "PANDUAN.md",
     desc: "Langkah menerapkan & deploy ulang ke project Apps Script Anda.",
-    href: "/download/PANDUAN_REV11.md?v=rev11",
+    href: "/download/PANDUAN_REV12.md?v=rev12",
     downloadName: "PANDUAN.md",
-    size: "4 KB",
-    hash: "fb99f47eb4883987",
+    size: "5 KB",
+    hash: "99e75882b0ea95b4",
     icon: BookOpen,
     accent: "accent-emerald",
   },
@@ -60,7 +60,7 @@ export default function App() {
             <span className="dl-title-sub">SMA Kristen Waibakul</span>
           </h1>
           <p className="dl-lead">
-            Versi <strong style={{ color: "var(--amber)" }}>REV 11 · Build 2026-10-06</strong> —
+            Versi <strong style={{ color: "var(--amber)" }}>REV 12 · Build 2026-10-06</strong> —
             nama file berversi agar tidak tertukar cache unduhan lama. Setelah
             deploy, pastikan teks versi ini muncul di footer halaman login.
           </p>

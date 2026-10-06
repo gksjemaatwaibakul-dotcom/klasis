@@ -38,6 +38,12 @@ Konfigurasi default: Ganjil Jul–Des, Genap Jan–Jun, triwulan per 3 bulan (di
 - Terminologi: Pengampuh→Pengampu & Alfa→Alpa global; migrasi Role di _ensureAuthSchema; rename/merge sheet AbsensiPengampuh→AbsensiPengampu; normalisasi /^al/i untuk data lama
 - Uji: 41/41 tes simulasi Node lolos; screenshot UI (login, publik, dashboard admin, kelola peringatan, bahan ajar) OK
 
+## Perbaikan REV 12 (2026-10-06)
+- Hari Libur multi-tanggal: `tambahHariLiburBatch(userCtx, tanggalList, keterangan, kelompokId)` + `getHariAktifJadwal()`; UI mode satu/rentang/minggu/bulan/beberapa + opsi "hanya hari aktif jadwal"
+- Penetapan spesifik per tanggal & kelompok (tidak permanen), menekan peringatan absen siswa & pengampu; idempoten (duplikat dilewati)
+- Ini mekanisme resmi meniadakan peringatan (menggantikan dismiss permanen yang menutup kelas 11)
+- Uji: 58/58 tes Node lolos (6 tes baru REV 12); `APP_REV='REV 12'`
+
 ## Perbaikan REV 11 (2026-10-06)
 - Akar masalah kelas 11 (terbukti via Diagnosa user): seluruh peringatan absen kelas 11 tertutup aturan dismiss lama (`disembunyikan` = `belum isi` untuk tiap kelas 11). Bukan bug perhitungan
 - `getDiagnosaPeringatan` diperluas: menampilkan daftar aturan dismiss yang menutup absenSiswa (kelompok, tanggal, pembuat)
