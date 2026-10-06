@@ -5,19 +5,22 @@ const FILES = [
   {
     key: "code-gs",
     name: "Code.gs",
-    desc: "Backend Google Apps Script (final) — seluruh logika, API, dan konfigurasi KONFIG.",
-    href: "/download/Code.gs",
+    desc: "Backend Google Apps Script (REV 9) — peringatan kelas 11, dashboard ringkas, chart publik, bahan ajar.",
+    href: "/download/Code_REV9_2026-10-06.gs?v=rev9",
+    downloadName: "Code.gs",
     size: "171 KB",
+    hash: "9118a77bd30cf6c3",
     icon: FileCode2,
     accent: "accent-amber",
   },
   {
     key: "index-html",
     name: "Index.html",
-    desc: "Frontend Web App (final) — seluruh tampilan, dashboard, dan interaksi UI.",
-    href: "/download/Index.html.txt",
+    desc: "Frontend Web App (REV 9) — footer versi, ringkasan dashboard, maximize bahan ajar.",
+    href: "/download/Index_REV9_2026-10-06.html.txt?v=rev9",
     downloadName: "Index.html",
-    size: "292 KB",
+    size: "293 KB",
+    hash: "fd8ca9f7e4404da9",
     icon: FileText,
     accent: "accent-sky",
   },
@@ -25,8 +28,10 @@ const FILES = [
     key: "panduan-md",
     name: "PANDUAN.md",
     desc: "Langkah menerapkan & deploy ulang ke project Apps Script Anda.",
-    href: "/download/PANDUAN.md",
+    href: "/download/PANDUAN_REV9.md?v=rev9",
+    downloadName: "PANDUAN.md",
     size: "3 KB",
+    hash: "e339648ec6a07ff3",
     icon: BookOpen,
     accent: "accent-emerald",
   },
@@ -55,8 +60,9 @@ export default function App() {
             <span className="dl-title-sub">SMA Kristen Waibakul</span>
           </h1>
           <p className="dl-lead">
-            Unduh file final di bawah ini, lalu tempelkan ke project Google Apps
-            Script Anda. Data dan fitur lama tetap utuh.
+            Versi <strong style={{ color: "var(--amber)" }}>REV 9 · Build 2026-10-06</strong> —
+            nama file kini berversi agar tidak tertukar cache unduhan lama. Setelah
+            deploy, pastikan teks versi ini muncul di footer halaman login.
           </p>
         </header>
 
@@ -79,6 +85,9 @@ export default function App() {
                 </div>
                 <h2 className="dl-card-name">{f.name}</h2>
                 <p className="dl-card-desc">{f.desc}</p>
+                <p className="dl-card-hash" data-testid={`hash-${f.key}`}>
+                  SHA-256: {f.hash}…
+                </p>
                 <span className="dl-card-cta">
                   <Download size={16} strokeWidth={2} />
                   Unduh
