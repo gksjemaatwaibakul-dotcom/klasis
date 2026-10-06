@@ -1,57 +1,110 @@
-import { useEffect } from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-import { HOME } from "@/constants/testIds";
+import { FileCode2, FileText, BookOpen, Download, CheckCircle2 } from "lucide-react";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const FILES = [
+  {
+    key: "code-gs",
+    name: "Code.gs",
+    desc: "Backend Google Apps Script (final) — seluruh logika, API, dan konfigurasi KONFIG.",
+    href: "/download/Code.gs",
+    size: "169 KB",
+    icon: FileCode2,
+    accent: "accent-amber",
+  },
+  {
+    key: "index-html",
+    name: "Index.html",
+    desc: "Frontend Web App (final) — seluruh tampilan, dashboard, dan interaksi UI.",
+    href: "/download/Index.html",
+    size: "290 KB",
+    icon: FileText,
+    accent: "accent-sky",
+  },
+  {
+    key: "panduan-md",
+    name: "PANDUAN.md",
+    desc: "Langkah menerapkan & deploy ulang ke project Apps Script Anda.",
+    href: "/download/PANDUAN.md",
+    size: "2 KB",
+    icon: BookOpen,
+    accent: "accent-emerald",
+  },
+];
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+const STEPS = [
+  "Buka project Apps Script (dari spreadsheet: Extensions \u2192 Apps Script).",
+  "Timpa isi file lama dengan Code.gs dan Index.html yang baru diunduh.",
+  "Simpan, lalu jalankan fungsi setupDatabase sekali dari editor.",
+  "Deploy \u2192 Manage deployments \u2192 Edit \u2192 New version \u2192 Deploy.",
+  "Set \u201cWho has access\u201d = Anyone (execute as: Me) agar mode Pengunjung aktif.",
+];
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
+export default function App() {
   return (
-    // The marker attribute below lets the platform probe detect the stock splash — remove it with this page
-    <div data-emergent-splash>
-      <header className="App-header">
-        <a
-          data-testid={HOME.emergentLink}
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+    <div className="dl-page" data-testid="download-page">
+      <div className="dl-glow" aria-hidden="true" />
+      <main className="dl-shell">
+        <header className="dl-head">
+          <span className="dl-eyebrow" data-testid="download-eyebrow">
+            Google Apps Script · Siap Deploy
+          </span>
+          <h1 className="dl-title">
+            Aplikasi Katekisasi
+            <br />
+            <span className="dl-title-sub">SMA Kristen Waibakul</span>
+          </h1>
+          <p className="dl-lead">
+            Unduh file final di bawah ini, lalu tempelkan ke project Google Apps
+            Script Anda. Data dan fitur lama tetap utuh.
+          </p>
+        </header>
 
-function App() {
-  return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+        <section className="dl-grid" data-testid="download-grid">
+          {FILES.map((f) => {
+            const Icon = f.icon;
+            return (
+              <a
+                key={f.key}
+                href={f.href}
+                download
+                className={`dl-card ${f.accent}`}
+                data-testid={`download-${f.key}`}
+              >
+                <div className="dl-card-top">
+                  <span className="dl-icon">
+                    <Icon size={26} strokeWidth={1.75} />
+                  </span>
+                  <span className="dl-size">{f.size}</span>
+                </div>
+                <h2 className="dl-card-name">{f.name}</h2>
+                <p className="dl-card-desc">{f.desc}</p>
+                <span className="dl-card-cta">
+                  <Download size={16} strokeWidth={2} />
+                  Unduh
+                </span>
+              </a>
+            );
+          })}
+        </section>
+
+        <section className="dl-steps" data-testid="deploy-steps">
+          <h3 className="dl-steps-title">Cara Deploy</h3>
+          <ol className="dl-steps-list">
+            {STEPS.map((s, i) => (
+              <li key={i} className="dl-step" data-testid={`deploy-step-${i + 1}`}>
+                <CheckCircle2 size={18} strokeWidth={2} className="dl-step-ic" />
+                <span>{s}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <footer className="dl-foot">
+          Status baru tertulis <strong>“Alpa”</strong>, data lama{" "}
+          <strong>“Alfa”</strong> tetap terbaca otomatis. Peringatan kini
+          berbasis Jadwal Mengajar.
+        </footer>
+      </main>
     </div>
   );
 }
-
-export default App;
